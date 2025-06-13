@@ -711,18 +711,26 @@
     timerStarted = false; 
   }
 
- function submitTranscription() {
-  resetTimer();
-  if (!originalText) return alert("Please load a transcript first.");
-  const typed = document.getElementById('typingBox').value.trim();
-  const checkPunct = document.getElementById("checkPunctuation")?.checked ?? false;
+  // Levenshtein distance for spelling check
+  function levenshtein(a, b) {
+    const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[a.length][b.length];
+  }
 
-  // --- Number phrase to digit converter ---
+  // Number phrase to digit converter
   function wordsToNumber(text) {
     const small = {
       zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
-      ten:10, eleven:11, twelve:12, thirteen:13, fourteen:13, fifteen:15,
-      seventeen:17, eighteen:18, nineteen:19
+      ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15,
+      sixteen:16, seventeen:17, eighteen:18, nineteen:19
     };
     const tens = {
       twenty:20, thirty:30, forty:40, fifty:50, sixty:60,
@@ -762,7 +770,7 @@
     return total > 0 ? total.toString() : text;
   }
 
-  // --- Preprocess text: convert number phrases to digits ---
+  // Preprocess text: convert number phrases to digits
   function preprocessText(text) {
     let words = text.trim().split(/\s+/);
     let resultWords = [];
@@ -800,97 +808,11 @@
     return resultWords.join(" ");
   }
 
-  // --- Normalize percent words and symbols ---
+  // Normalize percent words and symbols
   function normalizePercent(text) {
-    // Replace variations like "percent", "per cent", "%", "per-cent" with "percent"
     return text.replace(/\bper\s*cent\b/gi, "percent")
                .replace(/%/g, "percent")
                .replace(/\bper-cent\b/gi, "percent");
-  }
-
-  // Preprocess and normalize original and typed text before splitting
-  const originalProcessed = preprocessText(originalText);
-  const typedProcessed = preprocessText(typed);
-
-  const originalNormalizedPercent = normalizePercent(originalProcessed);
-  const typedNormalizedPercent = normalizePercent(typedProcessed);
-
-  const originalWords = originalNormalizedPercent.split(/\s+/);
-  const typedWords = typedNormalizedPercent ? typedNormalizedPercent.split(/\s+/) : [];
-
-  // Store alignment for filtering
-  g_alignment = [];
-
-  // If typedWords are empty, populate alignment as all omissions
-  if (typedWords.length === 0) {
-    for (const w of originalWords) {
-      g_alignment.push({ type: "del", o: w });
-    }
-  } else {
-    // DP arrays for edit distance
-    const dp = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(0));
-    const trace = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(""));
-
-    for (let i = 0; i <= originalWords.length; i++) dp[i][0] = i;
-    for (let j = 0; j <= typedWords.length; j++) dp[0][j] = j;
-
-    for (let i = 1; i <= originalWords.length; i++) {
-      for (let j = 1; j <= typedWords.length; j++) {
-        if (originalWords[i - 1] === typedWords[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1];
-          trace[i][j] = "match";
-        } else {
-          const subCost = dp[i - 1][j - 1] + 2;
-          const insCost = dp[i][j - 1] + 1;
-          const delCost = dp[i - 1][j] + 1;
-          const min = Math.min(subCost, insCost, delCost);
-          dp[i][j] = min;
-          trace[i][j] = min === subCost ? "sub" : min === insCost ? "ins" : "del";
-        }
-      }
-    }
-
-    let i = originalWords.length, j = typedWords.length;
-    while (i > 0 || j > 0) {
-      if (i > 0 && j > 0 && trace[i][j] === "match") {
-        g_alignment.unshift({ type: "match", o: originalWords[i - 1], t: typedWords[j - 1] });
-        i--; j--;
-      } else if (i > 0 && j > 0 && trace[i][j] === "sub") {
-        g_alignment.unshift({ type: "sub", o: originalWords[i - 1], t: typedWords[j - 1] });
-        i--; j--;
-      } else if (j > 0 && trace[i][j] === "ins") {
-        g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
-        j--;
-      } else if (i > 0 && trace[i][j] === "del") {
-        g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
-        i--;
-      } else {
-        if (i > 0) {
-          g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
-          i--;
-        } else if (j > 0) {
-          g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
-          j--;
-        } else {
-          break;
-        }
-      }
-    }
-  }
-
-
-  // Levenshtein distance for spelling check
-  function levenshtein(a, b) {
-    const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
-    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
-    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
-    for (let i = 1; i <= a.length; i++) {
-      for (let j = 1; j <= b.length; j++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-      }
-    }
-    return dp[a.length][b.length];
   }
 
   // Number match check using normalized numbers
@@ -924,6 +846,7 @@
 
     return word;
   }
+
   function isNumberMatch(origWord, typedWord) {
     let n1 = normalizeNumberWord(origWord);
     let n2 = normalizeNumberWord(typedWord);
@@ -933,126 +856,314 @@
     }
     return false;
   }
+
   function hasComma(s) { return /,/.test(s); }
   function hasPunct(s) { return /[.?!]/.test(s); }
 
-  let fullMistakes = 0, halfMistakes = 0;
-  let resultHtmlContent = ''; // This will store the HTML for the highlighted text
+  const abbreviationGroups = [
+    ["honourable", "hon'ble", "hon"],
+    ["doctor", "dr"],
+    ["professor", "prof"],
+    ["mister", "mr"],
+    ["misses", "mrs"],
+    ["reverend", "rev"],
+    ["governor", "gov"],
+    ["captain", "capt"],
+    ["lieutenant", "lt"],
+    ["colonel", "col"],
+    ["major", "maj"],
+    ["minister", "min"],
+    ["president", "pres"],
+    ["secretary", "sec"],
+    ["department", "dept"],
+    ["organization", "org"],
+    ["corporation", "corp"],
+    ["limited", "ltd"],
+    ["company", "co"],
+    ["junior", "jr"],
+    ["senior", "sr"]
+  ];
 
-  for (const entry of g_alignment) { // Use g_alignment directly
-    if (entry.type === "match") {
-      resultHtmlContent += `<span>${entry.t}</span> `; // Regular words
-    } else if (entry.type === "del") {
-      resultHtmlContent += `<span class='highlight omission' data-mistake-type='omission'>${entry.o}</span> `;
-      fullMistakes++;
-    } else if (entry.type === "ins") {
-      resultHtmlContent += `<span class='highlight extra' data-mistake-type='extra'>${entry.t}</span> `;
-      fullMistakes++;
-    } else if (entry.type === "sub") {
-      const clean = str => str.replace(/[.,!?;:'"]+$/, '');
-      const o = clean(entry.o);
-      const t = clean(entry.t);
-      const ol = o.toLowerCase(), tl = t.toLowerCase();
+  function areWordsEquivalent(w1, w2) {
+    const clean = str => str.toLowerCase().replace(/[.']/g, '');
 
-      if (isNumberMatch(ol, tl)) {
-        resultHtmlContent += `<span>${entry.t}</span> `;
-      } else if (!checkPunct && o === t) {
-        resultHtmlContent += `<span>${entry.t}</span> `;
-      } else if (checkPunct && (hasComma(entry.o) !== hasComma(entry.t) || hasPunct(entry.o) !== hasPunct(entry.t))) {
-        resultHtmlContent += `<span class='highlight punctuation' data-mistake-type='punctuation'>${entry.t}</span> `;
-        halfMistakes++;
-      } else if (ol === tl && entry.o !== entry.t) {
-        resultHtmlContent += `<span class='highlight capitalization' data-mistake-type='capitalization'>${entry.t}</span> `;
-        halfMistakes++;
-      } else if (levenshtein(o, t) <= 2) {
-        resultHtmlContent += `<span class='highlight spelling' data-mistake-type='spelling'>${entry.o} (<b>${entry.t}</b>)</span> `;
-        halfMistakes++;
-      } else {
-        resultHtmlContent += `<span class='highlight substitution' data-mistake-type='substitution'>${entry.t}</span> <span class='highlight omission' data-mistake-type='omission'>(${entry.o})</span> `;
-        fullMistakes += 2; // Treat as 2 mistakes (omission + substitution)
+    const a = clean(w1);
+    const b = clean(w2);
+
+    if (a === b) return true;
+
+    for (let group of abbreviationGroups) {
+      const cleaned = group.map(clean);
+      if (cleaned.includes(a) && cleaned.includes(b)) {
+        return true;
       }
     }
+    return false;
   }
 
-  const totalWords = originalWords.length;
-  const typedWordCount = typedWords.length; // New metric
-  const mistakeScore = fullMistakes + halfMistakes * 0.5;
-  const accuracy = (((totalWords - mistakeScore) / totalWords) * 100).toFixed(2);
-
-  const typedCharCount = typed.length;
-  const timeTakenSeconds = transcriptionTimerTotalTime - timeLeft;
-  let strokesPerMinute = 0;
-  if (timeTakenSeconds > 0) {
-    strokesPerMinute = (typedCharCount / timeTakenSeconds) * 60;
+  // Normalize common honorific variants (do NOT lowercase here)
+  function normalizeHonorifics(text) {
+    return text
+      .replace(/\bHonourable\b/gi, 'hon')
+      .replace(/\bHonorable\b/gi, 'hon')
+      .replace(/\bHon'ble\b/gi, 'hon')
+      .replace(/\bHon\.\b/gi, 'hon')
+      .replace(/\bHon\b/gi, 'hon')
+      .replace(/\bShri\b/gi, 'shri')
+      .replace(/\bSmt\.\b/gi, 'smt')
+      .replace(/\bDr\.\b/gi, 'dr')
+      .replace(/\bMr\.\b/gi, 'mr')
+      .replace(/\bMrs.\b/gi, 'mrs');
   }
 
-  let finalTypingSpeed = 0; // Calculate final typing speed (WPM)
-  if (timeTakenSeconds > 0) {
-      finalTypingSpeed = (typedWordCount / (timeTakenSeconds / 60)).toFixed(2);
+  function submitTranscription() {
+    resetTimer(); // Reset timer as per existing functionality
+    if (!originalText) return alert("Please load a transcript first.");
+
+    const typed = document.getElementById('typingBox').value.trim();
+    const typedWordsForCount = typed.split(/\s+/).filter(word => word.length > 0); // Filter out empty strings from multiple spaces
+
+    const MIN_WORDS_REQUIRED = 50; // Set your desired minimum number of words here
+
+    if (typedWordsForCount.length < MIN_WORDS_REQUIRED) {
+        alert(`Please type at least ${MIN_WORDS_REQUIRED} words before submitting.`);
+        return; // Stop the function here if the condition is not met
+    }
+
+    const checkPunct = document.getElementById("checkPunctuation")?.checked ?? false;
+
+    // Preprocess and normalize original and typed text before splitting
+    const originalProcessed = preprocessText(normalizeHonorifics(originalText));
+    const typedProcessed = preprocessText(normalizeHonorifics(typed));
+
+    const originalNormalizedPercent = normalizePercent(originalProcessed);
+    const typedNormalizedPercent = normalizePercent(typedProcessed);
+
+    const originalWords = originalNormalizedPercent.split(/\s+/).filter(word => word.length > 0);
+    const typedWords = typedNormalizedPercent.split(/\s+/).filter(word => word.length > 0);
+
+
+    // Store alignment for filtering
+    g_alignment = [];
+
+    // If typedWords are empty, populate alignment as all omissions
+    if (typedWords.length === 0 && originalWords.length > 0) {
+      for (const w of originalWords) {
+        g_alignment.push({ type: "del", o: w });
+      }
+    } else if (originalWords.length === 0 && typedWords.length > 0) {
+        for (const w of typedWords) {
+            g_alignment.push({ type: "ins", t: w });
+        }
+    } else if (originalWords.length === 0 && typedWords.length === 0) {
+        // Both are empty, no mistakes
+    }
+    else {
+      // DP arrays for edit distance
+      const dp = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(0));
+      const trace = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(""));
+
+      for (let i = 0; i <= originalWords.length; i++) dp[i][0] = i;
+      for (let j = 0; j <= typedWords.length; j++) dp[0][j] = j;
+
+      for (let i = 1; i <= originalWords.length; i++) {
+        for (let j = 1; j <= typedWords.length; j++) {
+          if (originalWords[i - 1] === typedWords[j - 1]) {
+            dp[i][j] = dp[i - 1][j - 1];
+            trace[i][j] = "match";
+          } else {
+            const subCost = dp[i - 1][j - 1] + 2;
+            const insCost = dp[i][j - 1] + 1;
+            const delCost = dp[i - 1][j] + 1;
+            const min = Math.min(subCost, insCost, delCost);
+            dp[i][j] = min;
+            trace[i][j] = min === subCost ? "sub" : min === insCost ? "ins" : "del";
+          }
+        }
+      }
+
+      let i = originalWords.length, j = typedWords.length;
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && trace[i][j] === "match") {
+          g_alignment.unshift({ type: "match", o: originalWords[i - 1], t: typedWords[j - 1] });
+          i--; j--;
+        } else if (i > 0 && j > 0 && trace[i][j] === "sub") {
+          g_alignment.unshift({ type: "sub", o: originalWords[i - 1], t: typedWords[j - 1] });
+          i--; j--;
+        } else if (j > 0 && trace[i][j] === "ins") {
+          g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
+          j--;
+        } else if (i > 0 && trace[i][j] === "del") {
+          g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
+          i--;
+        } else {
+          // Fallback for cases where trace might not be perfectly set or
+          // to handle remaining words if one array is exhausted
+          if (i > 0) {
+              g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
+              i--;
+          } else if (j > 0) {
+              g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
+              j--;
+          } else {
+              break;
+          }
+        }
+      }
+    }
+
+    // --- DEBUGGING: Log the alignment array ---
+    console.log("Calculated Alignment:", g_alignment);
+
+    let fullMistakes = 0, halfMistakes = 0;
+    let resultHtmlContent = "<p>"; // This will store the HTML for the highlighted text
+
+    for (const entry of g_alignment) { // Use g_alignment directly
+      if (entry.type === "match") {
+        resultHtmlContent += `<span>${entry.t}</span> `; // Regular words
+      } else if (entry.type === "del") {
+        resultHtmlContent += `<span class='highlight omission' data-mistake-type='omission'>${entry.o}</span> `;
+        fullMistakes++;
+      } else if (entry.type === "ins") {
+        resultHtmlContent += `<span class='highlight extra' data-mistake-type='extra'>${entry.t}</span> `;
+        fullMistakes++;
+      } else if (entry.type === "sub") {
+        const clean = str => str.replace(/[.,!?;:'"]+$/, '');
+        const o = entry.o; // Keep original word for punctuation check
+        const t = entry.t; // Keep typed word for punctuation check
+
+        const oClean = clean(o);
+        const tClean = clean(t);
+        const ol = oClean.toLowerCase(), tl = tClean.toLowerCase();
+
+        if (isNumberMatch(o, t)) { // Check original uncleaned words for number match
+            resultHtmlContent += `<span>${t}</span> `; // No mistake if number match
+        } else if (!checkPunct && oClean === tClean) {
+            resultHtmlContent += `<span>${t}</span> `; // No mistake if only punctuation difference and checkPunct is false
+        } else if (!areWordsEquivalent(oClean, tClean) && checkPunct && (hasComma(o) !== hasComma(t) || hasPunct(o) !== hasPunct(t))) {
+            resultHtmlContent += `<span class='highlight punctuation' data-mistake-type='punctuation'>${t}</span> `;
+            halfMistakes++;
+        } else if (ol === tl && o !== t) {
+            resultHtmlContent += `<span class='highlight capitalization' data-mistake-type='capitalization'>${t}</span> `;
+            halfMistakes++;
+        } else if (areWordsEquivalent(oClean, tClean)) {
+            resultHtmlContent += `<span>${t}</span> `; // Abbreviation match
+        } else if (levenshtein(oClean, tClean) <= 2) {
+            resultHtmlContent += `<span class='highlight spelling' data-mistake-type='spelling'>${o} (<b>${t}</b>)</span> `;
+            halfMistakes++;
+        } else {
+            resultHtmlContent += `<span class='highlight substitution' data-mistake-type='substitution'>${t}</span> <span class='highlight omission' data-mistake-type='omission'>(${o})</span> `;
+            fullMistakes += 2; // Treat as 2 mistakes (omission + substitution)
+        }
+      }
+    }
+    resultHtmlContent += "</p>";
+
+    const totalWords = originalWords.length;
+    const typedWordCount = typedWords.length;
+    const mistakeScore = fullMistakes + halfMistakes * 0.5;
+    const accuracy = (((totalWords - mistakeScore) / totalWords) * 100).toFixed(2);
+
+    const typedCharCount = typed.length;
+    const timeTakenSeconds = transcriptionTimerTotalTime - timeLeft;
+    let strokesPerMinute = 0;
+    if (timeTakenSeconds > 0) {
+      strokesPerMinute = (typedCharCount / timeTakenSeconds) * 60;
+    }
+
+    let finalTypingSpeed = 0; // Calculate final typing speed (WPM)
+    if (timeTakenSeconds > 0) {
+        finalTypingSpeed = (typedWordCount / (timeTakenSeconds / 60)).toFixed(2);
+    }
+
+    // Format timeTakenSeconds into MM:SS
+    const timeTakenMinutes = Math.floor(timeTakenSeconds / 60).toString().padStart(2, '0');
+    const timeTakenSecondsRemainder = (timeTakenSeconds % 60).toString().padStart(2, '0');
+    const formattedTimeTaken = `${timeTakenMinutes}:${timeTakenSecondsRemainder}`;
+
+
+    // Hide typing section
+    document.getElementById('typing-section').style.display = 'none';
+
+    document.getElementById("result-container").style.display = "block";
+    document.getElementById("result-container").innerHTML = `
+    <div class="result-header">
+        <div class="report-title">Result Sheet:</div>
+        <div class="report-meta-grid"> <div class="meta-item">Volume: ${g_vol}</div>
+            <div class="meta-item">Transcript: ${g_tran}</div>
+            <div class="meta-item">Typed Strokes: ${typedCharCount}</div> <div class="meta-item">Strokes per min: ${strokesPerMinute.toFixed(2)}</div>
+            <div class="meta-item">Typing Speed: ${finalTypingSpeed} WPM</div> <div class="meta-item">Time Taken: ${formattedTimeTaken}</div> <div class="meta-item">Date: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+        </div>
+        <div class="transcription-details" style="
+            display: flex; /* Use flexbox for horizontal layout */
+            justify-content: center; /* Center the items horizontally */
+            flex-wrap: wrap; /* Allow items to wrap to the next line */
+            gap: 15px; /* Increase gap between items */
+            margin-top: 20px; /* Add some top margin */
+        ">
+            <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Total Words: ${totalWords}</div>
+            <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Typed Words: ${typedWordCount}</div>
+            <div style="background-color: #dc3545; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Full Mistakes: ${fullMistakes}</div>
+            <div style="background-color: #ffc107; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Half Mistakes: ${halfMistakes}</div>
+            <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Mistake %: ${(mistakeScore / totalWords * 100).toFixed(2)}%</div>
+            <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Accuracy: ${accuracy}%</div>
+        </div>
+
+        <div class="filter-section"> <label for="mistakeFilter">Filter Mistakes:</label>
+            <select id="mistakeFilter" onchange="filterMistakes(this.value)">
+                <option value="all">All Mistakes</option>
+                <option value="omission">Omission</option>
+                <option value="extra">Extra</option>
+                <option value="substitution">Substitution</option>
+                <option value="spelling">Spelling Mistake</option>
+                <option value="capitalization">Capitalization</option>
+                <option value="punctuation">Punctuation</option>
+                <option value="omission-substitution">Omission/Substitution</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="result-text-area">
+        <p>${resultHtmlContent}</p>
+    </div>
+
+    <button id="downloadPDF" onclick="downloadPDFReport()">
+    ⬇️ Download Report
+    </button>
+    `;
+
+    // Display original transcription
+    document.getElementById('original-transcription-text').innerText = originalText;
+    document.getElementById('original-transcription-container').style.display = 'block';
+
+    // Initialize filter to "all"
+    filterMistakes('all');
   }
 
-  // Format timeTakenSeconds into MM:SS
-  const timeTakenMinutes = Math.floor(timeTakenSeconds / 60).toString().padStart(2, '0');
-  const timeTakenSecondsRemainder = (timeTakenSeconds % 60).toString().padStart(2, '0');
-  const formattedTimeTaken = `${timeTakenMinutes}:${timeTakenSecondsRemainder}`;
+  // Modified filterMistakes function to use data-mistake-type attribute and new types
+  function filterMistakes(type) {
+      const spans = document.querySelectorAll('#result-container .result-text-area .highlight');
+      spans.forEach(span => {
+          const mistakeType = span.getAttribute('data-mistake-type');
 
+          if (type === "all") {
+              span.classList.remove('hidden-mistake');
+          } else if (type === "omission-substitution") {
+              if (mistakeType === 'omission' || mistakeType === 'substitution') {
+                  span.classList.remove('hidden-mistake');
+              } else {
+                  span.classList.add('hidden-mistake');
+              }
+          } else {
+              if (mistakeType === type) {
+                  span.classList.remove('hidden-mistake');
+              } else {
+                  span.classList.add('hidden-mistake');
+              }
+          }
+      });
+  }
 
-  // Hide typing section
-  document.getElementById('typing-section').style.display = 'none';
-
-  document.getElementById("result-container").style.display = "block";
-  document.getElementById("result-container").innerHTML = `
-  <div class="result-header">
-      <div class="report-title">Result Sheet:</div>
-      <div class="report-meta-grid"> <div class="meta-item">Volume: ${g_vol}</div>
-          <div class="meta-item">Transcript: ${g_tran}</div>
-          <div class="meta-item">Typed Strokes: ${typedCharCount}</div> <div class="meta-item">Strokes per min: ${strokesPerMinute.toFixed(2)}</div>
-          <div class="meta-item">Typing Speed: ${finalTypingSpeed} WPM</div> <div class="meta-item">Time Taken: ${formattedTimeTaken}</div> <div class="meta-item">Date: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
-      </div>
-      <div class="transcription-details" style="
-          display: flex; /* Use flexbox for horizontal layout */
-          justify-content: center; /* Center the items horizontally */
-          flex-wrap: wrap; /* Allow items to wrap to the next line */
-          gap: 15px; /* Increase gap between items */
-          margin-top: 20px; /* Add some top margin */
-      ">
-          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Total Words: ${totalWords}</div>
-          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Typed Words: ${typedWordCount}</div>
-          <div style="background-color: #dc3545; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Full Mistakes: ${fullMistakes}</div>
-          <div style="background-color: #ffc107; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Half Mistakes: ${halfMistakes}</div>
-          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Mistake %: ${(mistakeScore / totalWords * 100).toFixed(2)}%</div>
-          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Accuracy: ${accuracy}%</div>
-      </div>
-
-      <div class="filter-section"> <label for="mistakeFilter">Filter Mistakes:</label>
-          <select id="mistakeFilter" onchange="applyMistakeFilter(this.value)">
-              <option value="all">All Mistakes</option>
-              <option value="omission">Omission</option>
-              <option value="extra">Extra</option>
-              <option value="substitution">Substitution</option>
-              <option value="spelling">Spelling Mistake</option>
-              <option value="capitalization">Capitalization</option>
-              <option value="punctuation">Punctuation</option>
-          </select>
-      </div>
-  </div>
-
-  <div class="result-text-area">
-      <p>${resultHtmlContent}</p>
-  </div>
-
-  <button id="downloadPDF" onclick="downloadPDFReport()">
-  ⬇️ Download Report
-  </button>
-  `;
-
-  // Display original transcription
-  document.getElementById('original-transcription-text').innerText = originalText;
-  document.getElementById('original-transcription-container').style.display = 'block';
-
-  // Initialize filter to "all"
-  applyMistakeFilter('all');
-}
 
 let videoTotalTime = 0, progressInterval; 
 
@@ -1129,22 +1240,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-
-// Added function for mistake filtering
-function applyMistakeFilter(filterType) {
-  const spans = document.querySelectorAll('#result-container .result-text-area .highlight');
-  spans.forEach(span => {
-    if (filterType === 'all') {
-      span.classList.remove('hidden-mistake');
-    } else {
-      if (span.getAttribute('data-mistake-type') === filterType) {
-        span.classList.remove('hidden-mistake');
-      } else {
-        span.classList.add('hidden-mistake');
-      }
-    }
-  });
-}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1257,3 +1352,4 @@ async function downloadPDFReport() {
 
 </body>
 </html>
+
