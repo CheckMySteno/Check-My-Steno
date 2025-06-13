@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>SSC Steno Dictation & Transcription Tool</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* --- Global Variables & Resets --- */
+    :root {
+      --primary-blue: #007bff;
+      --primary-blue-dark: #0056b3;
+      --light-blue-bg: #e6f0ff; /* For hover states or subtle backgrounds */
+      --dark-grey: #333;
+      --medium-grey: #555;
+      --light-grey: #f4f7fa;
+      --border-color: #ddd;
+      --white: #fff;
+      --shadow-light: rgba(0,0,0,0.05);
+      --shadow-medium: rgba(0,0,0,0.1);
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--light-grey);
+      margin: 0;
+      padding: 20px;
+      color: var(--dark-grey);
+      line-height: 1.6;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start; /* Align to top */
+      min-height: 100vh;
+    }
+    
+    .container {
+      /* Adjusted for "full screen" effect on live page */
+      max-width: 95vw; /* Use 95% of viewport width */
+      width: 100%;
+      margin: 20px auto;
+      background: var(--white);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px var(--shadow-light);
+      transition: all 0.3s ease;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-blue);
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* --- General Input, Select, Textarea, Button Styles --- */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea,
+    button {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 16px;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      color: var(--medium-grey);
+      transition: all 0.3s ease;
+      -webkit-appearance: none; /* Remove default browser styling */
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px var(--light-blue-bg);
+      outline: none;
+    }
+
+    button {
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background: var(--primary-blue-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px var(--shadow-light);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* --- Specific Section Styles --- */
+    #player-container, #transcribe-options, #typing-section, #result-container, #original-transcription-container {
+      background: var(--white);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow-light);
+      margin-top: 25px;
+    }
+
+    #player-container {
+        margin-bottom: 30px; /* Space between sections */
+    }
+
+    #player {
+      /* This ensures the player iframe itself remains hidden */
+      display: none; 
+      margin-top: 20px;
+      border-radius: 8px;
+      overflow: hidden; /* Ensures video corners are rounded */
+    }
+
+    #customControls {
+      margin-top: 20px;
+      display: none; /* Hidden by default, shown by JS when video loads */
+      text-align: center;
+    }
+
+    #playPauseBtn {
+      background-color: var(--primary-blue); /* Default blue */
+      font-weight: bold;
+      font-size: 18px;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    #playPauseBtn.paused { /* When paused, make it red */
+      background-color: #dc3545; /* Red */
+    }
+    #playPauseBtn.paused:hover {
+      background-color: #c82333; /* Darker red on hover */
+    }
+
+
+    #progressBar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      margin-top: 15px;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #progressBar:hover {
+      background: #cdd;
+    }
+
+    #progressTrack {
+      height: 100%;
+      background: var(--primary-blue);
+      width: 0%;
+      border-radius: 4px;
+      transition: width 0.1s linear; /* Smoother progress updates */
+    }
+
+    #videoLiveTimer {
+      font-size: 1.1em;
+      font-weight: 500;
+      color: var(--medium-grey);
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* --- Transcribe Options --- */
+    #transcribe-options label {
+      display: flex;
+      align-items: center;
+      margin-top: 15px;
+      font-size: 16px;
+      color: var(--medium-grey);
+      cursor: pointer;
+    }
+
+    #transcribe-options input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      position: relative;
+      background: var(--white);
+      transition: all 0.2s ease;
+    }
+
+    #transcribe-options input[type="checkbox"]:checked {
+      background-color: var(--primary-blue);
+      border-color: var(--primary-blue);
+    }
+
+    #transcribe-options input[type="checkbox"]:checked::before {
+      content: '✔';
+      display: block;
+      color: var(--white);
+      font-size: 14px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* --- Typing Section --- */
+    #typing-section {
+      position: relative; /* Needed for positioning the timer */
+      padding-top: 50px; /* Make space for the timer at the top */
+    }
+
+    .live-timer-container {
+      position: absolute;
+      top: 20px;
+      right: 25px; /* Aligned with container padding */
+      font-weight: 600;
+      font-size: 1.2em;
+      color: var(--primary-blue-dark);
+      background: var(--light-blue-bg);
+      padding: 8px 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px var(--shadow-light);
+      min-width: 150px; /* Ensure it doesn't get too small */
+      text-align: center;
+      z-index: 10; /* Ensure it's above other elements if any overlap */
+    }
+    
+    #typingBox {
+      height: 350px; /* Increased height for more typing space */
+      font-size: 18px;
+      font-family: 'Courier New', monospace;
+      border: 2px solid var(--dark-grey); /* Black border */
+      padding: 20px;
+      box-sizing: border-box;
+      line-height: 1.7; /* Slightly more spacious line height */
+      resize: vertical; /* Allow vertical resize only */
+      background: var(--white);
+      border-radius: 4px; /* Slightly rounded corners for the box itself */
+      color: var(--dark-grey); /* Ensure text is dark */
+    }
+
+    /* --- Result Section Styles (Unified for Web & PDF Look) --- */
+    #result-container {
+      display: none; /* Controlled by JS */
+      border: none !important; /* No border for the main container */
+      padding: 0 !important; /* No padding for the main container, handled by children */
+      margin-top: 30px;
+      border-radius: 12px;
+      box-shadow: none !important; /* No shadow for the main container */
+      background: #ffffff !important; /* Ensure solid white background */
+    }
+
+    /* New styles for the modern header within result-header */
+    .result-header {
+      padding: 20px; /* Adjusted padding */
+      margin: 0 !important; /* No margin for result header */
+      border-radius: 0 !important; /* No rounded top corners for integrated look */
+      background: linear-gradient(135deg, #e0efff, #c0d8ff) !important; /* Lighter blue gradient for header */
+      box-shadow: none !important; /* No shadow for header */
+    }
+
+    .report-title {
+      text-align: center;
+      font-size: 2em !important; /* Smaller title for better fit */
+      font-weight: 700;
+      color: #333 !important; /* Solid dark color */
+      margin-bottom: 15px !important; /* More space below title */
+      padding-bottom: 10px !important;
+      border-bottom: 1px solid #eee !important; /* Lighter separator */
+      letter-spacing: -0.8px;
+    }
+
+    .report-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important; /* Adaptive columns for responsiveness */
+      gap: 10px !important; /* Smaller gap between items */
+      margin-bottom: 20px !important; /* Space between meta and details */
+    }
+
+    .meta-item {
+      background: var(--white);
+      padding: 10px 12px !important; /* More padding */
+      border-radius: 6px !important; /* More rounded corners */
+      border: 1px solid #f0f0f0 !important; /* Subtle border */
+      box-shadow: none !important; /* No shadow */
+      font-weight: 500 !important; /* Slightly bolder text */
+      color: var(--medium-grey);
+      font-size: 0.95em !important; /* Slightly smaller font */
+      text-align: center;
+      transition: none; /* Remove hover effect */
+    }
+
+    .meta-item:hover {
+      transform: none; /* Remove hover effect */
+      box-shadow: none; /* Remove hover effect */
+    }
+
+
+    .transcription-details {
+      display: flex; /* Changed from grid to flex for better control over spacing/wrapping for the boxes */
+      justify-content: center; /* Center the boxes horizontally */
+      flex-wrap: wrap; /* Allow boxes to wrap to next line */
+      gap: 15px; /* Spacing between the boxes */
+      margin-top: 20px; /* Space above the boxes */
+    }
+
+    .transcription-details div {
+      background-color: #17a2b8; /* Blue/Teal */
+      color: white;
+      padding: 15px 25px; /* Increased padding */
+      border-radius: 8px; /* Rounded corners */
+      font-weight: 600;
+      font-size: 1.1em;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow */
+    }
+
+    /* Override colors for specific mistake types if needed */
+    .transcription-details div:nth-child(3) { /* Full Mistakes */
+        background-color: #dc3545; /* Red */
+    }
+    .transcription-details div:nth-child(4) { /* Half Mistakes */
+        background-color: #ffc107; /* Orange/Yellow */
+    }
+
+
+    .filter-section {
+      text-align: center;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .filter-section label {
+      font-size: 1.1em;
+      font-weight: 600;
+      color: var(--dark-grey);
+      margin-bottom: 10px;
+    }
+
+    .filter-section select {
+      width: auto; /* Allow select to shrink */
+      min-width: 200px; /* Minimum width for dropdown */
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    .result-text-area {
+      margin-top: 20px;
+      padding: 15px !important; /* Adjusted padding */
+      border: none !important; /* No dashed border */
+      border-radius: 8px;
+      background: #fdfdfd !important; /* Slightly off-white background */
+      line-height: 1.7 !important; /* Adjusted line height */
+      font-size: 1em !important; /* Adjusted font size */
+    }
+    .result-text-area p {
+        margin: 0; /* Remove default paragraph margin */
+    }
+
+    /* Highlight styles - REVERTED TO ORIGINAL COLORS */
+    .highlight {
+      padding: 2px 5px;
+      border-radius: 3px; /* Original border radius */
+      display: inline-block;
+      margin: 0 2px; /* Original margin */
+      font-weight: 500;
+    }
+    .extra { background-color: #fbb6ce; }
+    .omission { background-color: #a3f7bf; }
+    .substitution { background-color: #f28b82; text-decoration: line-through; }
+    .spelling { background-color: #fdecc8; }
+    .capitalization { background-color: #cce3ff; }
+    .punctuation { background-color: #d9c9f2; }
+
+    .highlight b {
+        font-weight: 700; /* Make typed substitution bold */
+    }
+
+    /* For hiding specific mistake types in filter */
+    .hidden-mistake {
+        display: none !important; /* Use !important to override inline-block */
+    }
+
+    #downloadPDF {
+      margin: 30px auto;
+      display: block;
+      padding: 15px 30px;
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 10px var(--shadow-light);
+    }
+    #downloadPDF:hover {
+        background: var(--primary-blue-dark);
+        transform: translateY(-1px);
+    }
+
+    /* Styles for Original Transcription */
+    #original-transcription-container {
+      display: none; /* Initially hidden */
+      margin-top: 30px;
+      border: 1px dashed var(--border-color); /* Add a dashed border */
+      padding: 20px;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border-radius: 8px;
+    }
+
+    #original-transcription-container h2 {
+        text-align: center;
+        color: var(--primary-blue-dark);
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.8em;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    #original-transcription-text {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1em;
+        color: var(--dark-grey);
+        line-height: 1.8;
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
+    }
+
+    /* Utility classes */
+    .text-center {
+        text-align: center;
+    }
+</style>
+
+</head>
+<body>
+<div class="container">
+<h1>📝 SSC Steno Dictation & Transcription Tool</h1>
+
+<div id="player-container">
+    <input id="wordCount" min="1" placeholder="Estimated Word Count (e.g., 840)" type="number" value="840"/>
+    <input id="ytlink" placeholder="Paste YouTube Dictation Link here (e.g., https://youtu.be/dQw4w9WgXcQ)"/>
+    <select id="speed">
+        <option value="original">Original Speed</option>
+        <option value="60">60 WPM</option>
+        <option selected="" value="80">80 WPM</option>
+        <option value="100">100 WPM</option>
+        <option value="120">120 WPM</option>
+    </select>
+    <button onclick="loadVideo()">▶️ Load Video</button>
+    
+    <div id="player" style="display:none;"></div>
+    
+    <div id="customControls" style="margin-top:20px; display:none;">
+        <button id="playPauseBtn" onclick="togglePlay()">▶️ Play</button>
+        <div id="progressBar">
+            <div id="progressTrack"></div>
+        </div>
+        <div id="videoLiveTimer">00:00 / 00:00</div>
+    </div>
+</div>
+
+<div id="transcribe-options">
+    <select id="volume">
+        <option disabled="" selected="">Select Volume</option>
+        <script>
+            for(let i=1; i<=24; i++) {
+              document.write(`<option value="${i}">Volume ${i}</option>`);
+            }
+          </script>
+    </select>
+    <select id="transcript">
+        <option disabled="" selected="">Select Transcript</option>
+        <script>
+            for(let i=1; i<=22; i++) {
+              document.write(`<option value="${i}">Transcript ${i}</option>`);
+            }
+          </script>
+    </select>
+    <select id="timer-select">
+        <option selected="" value="50">50 Minute Timer</option>
+        <option value="40">40 Minute Timer</option>
+    </select>
+    <label>
+        <input id="checkPunctuation" type="checkbox"/>
+        Check Punctuation Errors
+    </label>
+    <button onclick="loadTranscript()">📄 Load Transcript & Transcribe</button>
+</div>
+
+<div id="typing-section" style="display:none;">
+    <div class="live-timer-container">
+        <span id="typingTimerDisplay">00:00 / 00:00</span>
+    </div>
+    <textarea id="typingBox" placeholder="Start typing here..." autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+    <button onclick="submitTranscription()">✅ Submit Transcription</button>
+</div>
+
+<div id="result-container"></div>
+
+<div id="original-transcription-container">
+    <h2>Real Transcription</h2>
+    <div id="original-transcription-text"></div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE",
+    authDomain: "checkmysteno.firebaseapp.com",
+    projectId: "checkmysteno",
+    storageBucket: "checkmysteno.appspot.com",
+    messagingSenderId: "719325115943",
+    appId: "1:719325115943:web:0dd50a67978816d42a8002"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let player, originalText = "", timer = null, timeLeft = 0;
+  let totalVideoDuration = 0; // To store the original video duration
+  let currentPlaybackRate = 1; // Global variable for the current playback rate
+  let transcriptionTimerTotalTime = 0; // Stores the total time for the transcription timer (e.g., 50 or 40 minutes)
+  let timerStarted = false; // Flag to ensure timer starts only once
+  let g_alignment = []; // Global variable to store the alignment data for re-filtering
+
+  function extractVideoID(url) {
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  }
+
+  function onYouTubeIframeAPIReady() {
+    // Player is initialized inside loadVideo now, no need to do it here
+  }
+
+  function loadVideo() {
+    const url = document.getElementById('ytlink').value.trim();
+    const videoId = extractVideoID(url);
+    if (!videoId) return alert("Invalid YouTube URL");
+
+    if (!player) {
+      player = new YT.Player('player', {
+        height: '360',
+        width: '100%', /* Make player responsive */
+        videoId,
+        events: {
+          onReady: (event) => {
+            // document.getElementById('player').style.display = 'block'; // REMOVED: Keep player hidden
+            totalVideoDuration = event.target.getDuration(); // Get original duration
+            showCustomControls();
+            player.pauseVideo();
+            onPlayerStateChange({ data: YT.PlayerState.PAUSED }); 
+          },
+          onStateChange: onPlayerStateChange
+        }
+      });
+    } else {
+      player.loadVideoById(videoId);
+      player.addEventListener('onReady', (event) => {
+        // document.getElementById('player').style.display = 'block'; // REMOVED: Keep player hidden
+        totalVideoDuration = event.target.getDuration(); // Update original duration
+        showCustomControls(); 
+        player.pauseVideo();
+        onPlayerStateChange({ data: YT.PlayerState.PAUSED });
+      });
+    }
+  }
+
+  function onPlayerStateChange(event) {
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    if (event.data === YT.PlayerState.PLAYING) {
+        playPauseBtn.classList.remove('paused');
+        playPauseBtn.textContent = '⏸️ Pause';
+    } else {
+        playPauseBtn.classList.add('paused');
+        playPauseBtn.textContent = '▶️ Play';
+    }
+
+    if (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.BUFFERING) {
+      const wpmSelected = document.getElementById('speed').value;
+      let playbackRate = 1; 
+
+      if (wpmSelected !== 'original' && totalVideoDuration > 0) {
+        const targetWPM = parseInt(wpmSelected);
+        const wordCount = parseInt(document.getElementById('wordCount').value); 
+
+        let estimatedOriginalWPM;
+        if (!isNaN(wordCount) && wordCount > 0 && totalVideoDuration > 0) {
+            estimatedOriginalWPM = wordCount / (totalVideoDuration / 60);
+        } else {
+            estimatedOriginalWPM = 80; 
+        }
+        
+        playbackRate = targetWPM / estimatedOriginalWPM;
+
+        if (isNaN(playbackRate) || !isFinite(playbackRate) || playbackRate <= 0) {
+            playbackRate = 1; 
+        }
+      }
+
+      player.setPlaybackRate(playbackRate);
+      currentPlaybackRate = playbackRate; 
+
+      videoTotalTime = totalVideoDuration / playbackRate;
+      
+      if (isNaN(videoTotalTime) || !isFinite(videoTotalTime)) {
+          videoTotalTime = player.getDuration(); 
+      }
+
+      updateVideoLiveTimer(); 
+      trackProgress();
+    }
+  }
+
+  function loadTranscript() {
+    const vol = document.getElementById('volume').value;
+    const tran = document.getElementById('transcript').value;
+    if (!vol || !tran) return alert("Please select Volume and Transcript.");
+
+    // Set global variables for volume and transcript
+    g_vol = vol;
+    g_tran = tran;
+
+    db.collection("volumes").doc(`vol${vol}`).collection("transcripts").doc(`t${tran}`).get()
+      .then(doc => {
+        if (doc.exists) {
+          originalText = doc.data().text;
+
+          transcriptionTimerTotalTime = parseInt(document.getElementById('timer-select').value) * 60 || 50 * 60;
+
+          document.getElementById('typing-section').style.display = 'block';
+          document.getElementById('typingBox').value = '';
+          document.getElementById('typingBox').focus(); 
+
+          document.getElementById('player-container').style.display = 'none';
+          document.getElementById('transcribe-options').style.display = 'none';
+          document.getElementById('result-container').innerHTML = '';
+          document.getElementById('result-container').style.display = 'none'; // Ensure results are hidden initially
+          document.getElementById('original-transcription-container').style.display = 'none'; // Hide original transcription container
+
+          resetTimer(); 
+          timerStarted = false; 
+
+          document.getElementById('typingBox').removeEventListener('keydown', handleFirstKeydown); 
+          document.getElementById('typingBox').addEventListener('keydown', handleFirstKeydown);
+        } else {
+          alert("Transcript not found.");
+        }
+      })
+      .catch(err => alert("Error fetching data: " + err));
+  }
+
+  function handleFirstKeydown() {
+    if (!timerStarted) {
+      startTimer();
+      timerStarted = true;
+      document.getElementById('typingBox').removeEventListener('keydown', handleFirstKeydown); 
+    }
+  }
+
+  function startTimer() {
+    if (timer) return; 
+    timeLeft = transcriptionTimerTotalTime; 
+    timer = setInterval(() => {
+      const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      const sec = (timeLeft % 60).toString().padStart(2, '0');
+      document.getElementById("typingTimerDisplay").innerText = `${min}:${sec} / ${formatTime(transcriptionTimerTotalTime)}`; 
+      if (--timeLeft < 0) {
+        clearInterval(timer);
+        timer = null;
+        alert("Time is up! Submitting your transcription.");
+        submitTranscription();
+      }
+    }, 1000);
+  }
+
+  function resetTimer() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    const selectedMinutes = parseInt(document.getElementById('timer-select').value) || 50;
+    transcriptionTimerTotalTime = selectedMinutes * 60; 
+    const min = selectedMinutes.toString().padStart(2, '0');
+    document.getElementById("typingTimerDisplay").innerText = `${min}:00 / ${formatTime(transcriptionTimerTotalTime)}`;
+    timerStarted = false; 
+  }
+
+ function submitTranscription() {
+  resetTimer();
+  if (!originalText) return alert("Please load a transcript first.");
+  const typed = document.getElementById('typingBox').value.trim();
+  const checkPunct = document.getElementById("checkPunctuation")?.checked ?? false;
+
+  // --- Number phrase to digit converter ---
+  function wordsToNumber(text) {
+    const small = {
+      zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
+      ten:10, eleven:11, twelve:12, thirteen:13, fourteen:13, fifteen:15,
+      seventeen:17, eighteen:18, nineteen:19
+    };
+    const tens = {
+      twenty:20, thirty:30, forty:40, fifty:50, sixty:60,
+      seventy:70, eighty:80, ninety:90
+    };
+    const scales = {
+      hundred:100,
+      thousand:1000,
+      lakh:100000,
+      million:1000000,
+      crore:10000000,
+      billion:1000000000
+    };
+
+    let current = 0;
+    let total = 0;
+    let words = text.toLowerCase().split(/[\s-]+/);
+
+    for (let i = 0; i < words.length; i++) {
+      let w = words[i].replace(/[,.]/g, '');
+
+      if (small.hasOwnProperty(w)) {
+        current += small[w];
+      } else if (tens.hasOwnProperty(w)) {
+        current += tens[w];
+      } else if (scales.hasOwnProperty(w)) {
+        if (current === 0) current = 1;
+        current *= scales[w];
+        total += current;
+        current = 0;
+      } else {
+        total += current;
+        current = 0;
+      }
+    }
+    total += current;
+    return total > 0 ? total.toString() : text;
+  }
+
+  // --- Preprocess text: convert number phrases to digits ---
+  function preprocessText(text) {
+    let words = text.trim().split(/\s+/);
+    let resultWords = [];
+    let numberPhrase = [];
+    const allNumberWords = new Set([
+      "zero","one","two","three","four","five","six","seven","eight","nine",
+      "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen",
+      "eighteen","nineteen","twenty","thirty","forty","fifty","sixty","seventy",
+      "eighty","ninety","hundred","thousand","lakh","million","crore","billion"
+    ]);
+
+    function flushNumberPhrase() {
+      if (numberPhrase.length === 0) return;
+      let phrase = numberPhrase.join(" ");
+      let converted = wordsToNumber(phrase);
+      if (/^\d+$/.test(converted)) {
+        resultWords.push(converted);
+      } else {
+        resultWords.push(...numberPhrase);
+      }
+      numberPhrase = [];
+    }
+
+    for (let w of words) {
+      let cleanW = w.toLowerCase().replace(/[.,]/g,'');
+      if (allNumberWords.has(cleanW)) {
+        numberPhrase.push(cleanW);
+      } else {
+        flushNumberPhrase();
+        resultWords.push(w);
+      }
+    }
+    flushNumberPhrase();
+
+    return resultWords.join(" ");
+  }
+
+  // --- Normalize percent words and symbols ---
+  function normalizePercent(text) {
+    // Replace variations like "percent", "per cent", "%", "per-cent" with "percent"
+    return text.replace(/\bper\s*cent\b/gi, "percent")
+               .replace(/%/g, "percent")
+               .replace(/\bper-cent\b/gi, "percent");
+  }
+
+  // Preprocess and normalize original and typed text before splitting
+  const originalProcessed = preprocessText(originalText);
+  const typedProcessed = preprocessText(typed);
+
+  const originalNormalizedPercent = normalizePercent(originalProcessed);
+  const typedNormalizedPercent = normalizePercent(typedProcessed);
+
+  const originalWords = originalNormalizedPercent.split(/\s+/);
+  const typedWords = typedNormalizedPercent ? typedNormalizedPercent.split(/\s+/) : [];
+
+  // Store alignment for filtering
+  g_alignment = [];
+
+  // If typedWords are empty, populate alignment as all omissions
+  if (typedWords.length === 0) {
+    for (const w of originalWords) {
+      g_alignment.push({ type: "del", o: w });
+    }
+  } else {
+    // DP arrays for edit distance
+    const dp = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(0));
+    const trace = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(""));
+
+    for (let i = 0; i <= originalWords.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= typedWords.length; j++) dp[0][j] = j;
+
+    for (let i = 1; i <= originalWords.length; i++) {
+      for (let j = 1; j <= typedWords.length; j++) {
+        if (originalWords[i - 1] === typedWords[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+          trace[i][j] = "match";
+        } else {
+          const subCost = dp[i - 1][j - 1] + 2;
+          const insCost = dp[i][j - 1] + 1;
+          const delCost = dp[i - 1][j] + 1;
+          const min = Math.min(subCost, insCost, delCost);
+          dp[i][j] = min;
+          trace[i][j] = min === subCost ? "sub" : min === insCost ? "ins" : "del";
+        }
+      }
+    }
+
+    let i = originalWords.length, j = typedWords.length;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && trace[i][j] === "match") {
+        g_alignment.unshift({ type: "match", o: originalWords[i - 1], t: typedWords[j - 1] });
+        i--; j--;
+      } else if (i > 0 && j > 0 && trace[i][j] === "sub") {
+        g_alignment.unshift({ type: "sub", o: originalWords[i - 1], t: typedWords[j - 1] });
+        i--; j--;
+      } else if (j > 0 && trace[i][j] === "ins") {
+        g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
+        j--;
+      } else if (i > 0 && trace[i][j] === "del") {
+        g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
+        i--;
+      } else {
+        if (i > 0) {
+          g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
+          i--;
+        } else if (j > 0) {
+          g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
+          j--;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+
+  // Levenshtein distance for spelling check
+  function levenshtein(a, b) {
+    const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[a.length][b.length];
+  }
+
+  // Number match check using normalized numbers
+  function normalizeNumberWord(word) {
+    const smallNumbers = {
+      zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
+      ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16, seventeen:17,
+      eighteen:18, nineteen:19,
+    };
+    const tens = {
+      twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90
+    };
+    const scales = {
+      hundred:100,
+      thousand:1000,
+      lakh:100000,
+      million:1000000,
+      crore:10000000,
+      billion:1000000000
+    };
+
+    word = word.toLowerCase().replace(/[,]/g, '');
+
+    if (!isNaN(word)) return Number(word);
+
+    if (/^\d+$/.test(word)) return Number(word);
+
+    if (smallNumbers[word] !== undefined) return smallNumbers[word];
+    if (tens[word] !== undefined) return tens[word];
+    if (scales[word] !== undefined) return scales[word];
+
+    return word;
+  }
+  function isNumberMatch(origWord, typedWord) {
+    let n1 = normalizeNumberWord(origWord);
+    let n2 = normalizeNumberWord(typedWord);
+
+    if (typeof n1 === "number" && typeof n2 === "number") {
+      return n1 === n2;
+    }
+    return false;
+  }
+  function hasComma(s) { return /,/.test(s); }
+  function hasPunct(s) { return /[.?!]/.test(s); }
+
+  let fullMistakes = 0, halfMistakes = 0;
+  let resultHtmlContent = ''; // This will store the HTML for the highlighted text
+
+  for (const entry of g_alignment) { // Use g_alignment directly
+    if (entry.type === "match") {
+      resultHtmlContent += `<span>${entry.t}</span> `; // Regular words
+    } else if (entry.type === "del") {
+      resultHtmlContent += `<span class='highlight omission' data-mistake-type='omission'>${entry.o}</span> `;
+      fullMistakes++;
+    } else if (entry.type === "ins") {
+      resultHtmlContent += `<span class='highlight extra' data-mistake-type='extra'>${entry.t}</span> `;
+      fullMistakes++;
+    } else if (entry.type === "sub") {
+      const clean = str => str.replace(/[.,!?;:'"]+$/, '');
+      const o = clean(entry.o);
+      const t = clean(entry.t);
+      const ol = o.toLowerCase(), tl = t.toLowerCase();
+
+      if (isNumberMatch(ol, tl)) {
+        resultHtmlContent += `<span>${entry.t}</span> `;
+      } else if (!checkPunct && o === t) {
+        resultHtmlContent += `<span>${entry.t}</span> `;
+      } else if (checkPunct && (hasComma(entry.o) !== hasComma(entry.t) || hasPunct(entry.o) !== hasPunct(entry.t))) {
+        resultHtmlContent += `<span class='highlight punctuation' data-mistake-type='punctuation'>${entry.t}</span> `;
+        halfMistakes++;
+      } else if (ol === tl && entry.o !== entry.t) {
+        resultHtmlContent += `<span class='highlight capitalization' data-mistake-type='capitalization'>${entry.t}</span> `;
+        halfMistakes++;
+      } else if (levenshtein(o, t) <= 2) {
+        resultHtmlContent += `<span class='highlight spelling' data-mistake-type='spelling'>${entry.o} (<b>${entry.t}</b>)</span> `;
+        halfMistakes++;
+      } else {
+        resultHtmlContent += `<span class='highlight substitution' data-mistake-type='substitution'>${entry.t}</span> <span class='highlight omission' data-mistake-type='omission'>(${entry.o})</span> `;
+        fullMistakes += 2; // Treat as 2 mistakes (omission + substitution)
+      }
+    }
+  }
+
+  const totalWords = originalWords.length;
+  const typedWordCount = typedWords.length; // New metric
+  const mistakeScore = fullMistakes + halfMistakes * 0.5;
+  const accuracy = (((totalWords - mistakeScore) / totalWords) * 100).toFixed(2);
+
+  const typedCharCount = typed.length;
+  const timeTakenSeconds = transcriptionTimerTotalTime - timeLeft;
+  let strokesPerMinute = 0;
+  if (timeTakenSeconds > 0) {
+    strokesPerMinute = (typedCharCount / timeTakenSeconds) * 60;
+  }
+
+  let finalTypingSpeed = 0; // Calculate final typing speed (WPM)
+  if (timeTakenSeconds > 0) {
+      finalTypingSpeed = (typedWordCount / (timeTakenSeconds / 60)).toFixed(2);
+  }
+
+  // Format timeTakenSeconds into MM:SS
+  const timeTakenMinutes = Math.floor(timeTakenSeconds / 60).toString().padStart(2, '0');
+  const timeTakenSecondsRemainder = (timeTakenSeconds % 60).toString().padStart(2, '0');
+  const formattedTimeTaken = `${timeTakenMinutes}:${timeTakenSecondsRemainder}`;
+
+
+  // Hide typing section
+  document.getElementById('typing-section').style.display = 'none';
+
+  document.getElementById("result-container").style.display = "block";
+  document.getElementById("result-container").innerHTML = `
+  <div class="result-header">
+      <div class="report-title">Result Sheet:</div>
+      <div class="report-meta-grid"> <div class="meta-item">Volume: ${g_vol}</div>
+          <div class="meta-item">Transcript: ${g_tran}</div>
+          <div class="meta-item">Typed Strokes: ${typedCharCount}</div> <div class="meta-item">Strokes per min: ${strokesPerMinute.toFixed(2)}</div>
+          <div class="meta-item">Typing Speed: ${finalTypingSpeed} WPM</div> <div class="meta-item">Time Taken: ${formattedTimeTaken}</div> <div class="meta-item">Date: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+      </div>
+      <div class="transcription-details" style="
+          display: flex; /* Use flexbox for horizontal layout */
+          justify-content: center; /* Center the items horizontally */
+          flex-wrap: wrap; /* Allow items to wrap to the next line */
+          gap: 15px; /* Increase gap between items */
+          margin-top: 20px; /* Add some top margin */
+      ">
+          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Total Words: ${totalWords}</div>
+          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Typed Words: ${typedWordCount}</div>
+          <div style="background-color: #dc3545; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Full Mistakes: ${fullMistakes}</div>
+          <div style="background-color: #ffc107; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Half Mistakes: ${halfMistakes}</div>
+          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Mistake %: ${(mistakeScore / totalWords * 100).toFixed(2)}%</div>
+          <div style="background-color: #17a2b8; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">Accuracy: ${accuracy}%</div>
+      </div>
+
+      <div class="filter-section"> <label for="mistakeFilter">Filter Mistakes:</label>
+          <select id="mistakeFilter" onchange="applyMistakeFilter(this.value)">
+              <option value="all">All Mistakes</option>
+              <option value="omission">Omission</option>
+              <option value="extra">Extra</option>
+              <option value="substitution">Substitution</option>
+              <option value="spelling">Spelling Mistake</option>
+              <option value="capitalization">Capitalization</option>
+              <option value="punctuation">Punctuation</option>
+          </select>
+      </div>
+  </div>
+
+  <div class="result-text-area">
+      <p>${resultHtmlContent}</p>
+  </div>
+
+  <button id="downloadPDF" onclick="downloadPDFReport()">
+  ⬇️ Download Report
+  </button>
+  `;
+
+  // Display original transcription
+  document.getElementById('original-transcription-text').innerText = originalText;
+  document.getElementById('original-transcription-container').style.display = 'block';
+
+  // Initialize filter to "all"
+  applyMistakeFilter('all');
+}
+
+let videoTotalTime = 0, progressInterval; 
+
+function togglePlay() {
+  if (!player) return;
+  const btn = document.getElementById("playPauseBtn");
+  if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+    player.pauseVideo();
+    btn.classList.add('paused'); /* Add class for red background */
+    btn.textContent = '▶️ Play'; /* Change text to Play */
+    clearInterval(progressInterval);
+  }
+}
+
+function trackProgress() {
+  clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    if (!player || videoTotalTime === 0 || currentPlaybackRate === 0) return;
+    const adjustedCurrentTime = player.getCurrentTime() / currentPlaybackRate;
+    const percent = (adjustedCurrentTime / videoTotalTime) * 100;
+    document.getElementById("progressTrack").style.width = percent + "%";
+    updateVideoLiveTimer();
+  }, 250);
+}
+
+
+function showCustomControls() {
+  const controls = document.getElementById("customControls");
+  if (controls) controls.style.display = "block";
+  const btn = document.getElementById("playPauseBtn");
+  if (btn) {
+    btn.classList.add('paused'); // Ensure it's red and shows Play initially
+    btn.textContent = '▶️ Play';
+  }
+  updateVideoLiveTimer(); 
+}
+
+function formatTime(seconds) {
+  // Round seconds to the nearest whole number to avoid excessive decimal places
+  const roundedSeconds = Math.round(seconds);
+  const m = Math.floor(roundedSeconds / 60).toString().padStart(2, '0');
+  const s = (roundedSeconds % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+function updateVideoLiveTimer() {
+  const videoLiveTimerElement = document.getElementById("videoLiveTimer");
+  if (!player || videoTotalTime === 0 || currentPlaybackRate === 0 || !videoLiveTimerElement) {
+    if(videoLiveTimerElement) videoLiveTimerElement.innerText = "00:00 / 00:00";
+    return;
+  }
+  const originalCurrentTime = player.getCurrentTime();
+  const adjustedCurrentTime = originalCurrentTime / currentPlaybackRate;
+  videoLiveTimerElement.innerText = formatTime(adjustedCurrentTime) + " / " + formatTime(videoTotalTime);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const progressBar = document.getElementById("progressBar");
+  const progressTrack = document.getElementById("progressTrack");
+  const videoLiveTimerElement = document.getElementById("videoLiveTimer"); 
+
+  if (progressBar && progressTrack && videoLiveTimerElement) {
+    progressBar.addEventListener("click", function (e) {
+      if (!player || videoTotalTime === 0 || currentPlaybackRate === 0) return;
+      const rect = progressBar.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const adjustedSeekTime = percent * videoTotalTime;
+
+      const originalSeekTime = adjustedSeekTime * currentPlaybackRate;
+      player.seekTo(originalSeekTime, true);
+      
+      progressTrack.style.width = (percent * 100) + "%";
+      updateVideoLiveTimer(); 
+    });
+  }
+});
+
+// Added function for mistake filtering
+function applyMistakeFilter(filterType) {
+  const spans = document.querySelectorAll('#result-container .result-text-area .highlight');
+  spans.forEach(span => {
+    if (filterType === 'all') {
+      span.classList.remove('hidden-mistake');
+    } else {
+      if (span.getAttribute('data-mistake-type') === filterType) {
+        span.classList.remove('hidden-mistake');
+      } else {
+        span.classList.add('hidden-mistake');
+      }
+    }
+  });
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// IMPORTANT: This downloadPDFReport function is for the PDF export,
+// and its internal logic for capturing the clone remains tuned for PDF.
+// The live screen display changes are handled by the CSS above.
+async function downloadPDFReport() {
+  const { jsPDF } = window.jspdf;
+  const resultContainer = document.getElementById("result-container");
+  const originalTranscriptionContainer = document.getElementById("original-transcription-container");
+
+  try {
+    // Temporarily hide elements that should not be in the PDF
+    const downloadButton = document.getElementById("downloadPDF");
+    if (downloadButton) downloadButton.style.display = 'none';
+    if (originalTranscriptionContainer) originalTranscriptionContainer.style.display = 'none';
+
+    // Clone the result container.
+    const clone = resultContainer.cloneNode(true);
+    
+    // Ensure the filter section is shown in the PDF clone if it's visible on screen
+    const filterSection = clone.querySelector('.filter-section');
+    if (filterSection) filterSection.style.display = 'flex'; // Use flex if it's display flex in the original
+
+    // Create a wrapper for the cloned element to ensure it's rendered off-screen for capture
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "absolute"; 
+    wrapper.style.top = "-9999px"; 
+    wrapper.style.left = "-9999px"; 
+    wrapper.style.opacity = "0"; 
+    wrapper.style.zIndex = "-9999"; 
+    wrapper.style.background = "#fff"; 
+    
+    // We need to calculate the PDF page width and margin first to set the clone's width correctly
+    // This helps html2canvas render the content at the *exact* width it will appear in the PDF.
+    // Temporarily create a jsPDF instance to get page dimensions
+    const tempPdf = new jsPDF('p', 'pt', 'a4');
+    const pdfPageWidthPoints = tempPdf.internal.pageSize.getWidth(); // A4 width in points (~595.28)
+    const pdfHorizontalMarginPoints = 20; // Minimal margin for PDF
+    const desiredContentWidthPoints = pdfPageWidthPoints - (2 * pdfHorizontalMarginPoints);
+
+    // Set the wrapper/clone width in pixels. Assuming 1 point = 1 pixel for html2canvas rendering.
+    wrapper.style.width = `${desiredContentWidthPoints}px`; 
+    
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Give a small delay to ensure the cloned element is rendered in the DOM before capture
+    await new Promise(resolve => setTimeout(resolve, 100)); 
+
+    const canvas = await html2canvas(clone, {
+      scale: 2, // Higher scale for better resolution
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      // These windowWidth/Height will now reflect the `wrapper.style.width`
+      windowWidth: clone.offsetWidth, 
+      windowHeight: clone.offsetHeight 
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 1.0); 
+
+    // Re-initialize jsPDF for the actual document generation
+    const pdf = new jsPDF('p', 'pt', 'a4'); 
+    const pageHeight = pdf.internal.pageSize.getHeight(); 
+
+    const imgProps = pdf.getImageProperties(imgData);
+    
+    // The image is already captured at the desired width, so use that width directly
+    const imgPdfWidth = desiredContentWidthPoints;
+    // Calculate proportional height based on the captured image's aspect ratio
+    const imgPdfHeight = (imgProps.height * imgPdfWidth) / imgProps.width; 
+
+    let currentImageY = 0; // This tracks the Y position *within the full captured image* that has been rendered
+
+    while (currentImageY < imgPdfHeight) {
+      if (currentImageY > 0) {
+        pdf.addPage();
+      }
+      
+      // Add image slice to the current PDF page
+      // x: horizontal margin
+      // y: vertical margin (for the current page's top) - currentImageY (to "scroll" the image up)
+      // width: scaled image width
+      // height: scaled image height (full height of the captured image)
+      pdf.addImage(imgData, 'JPEG', pdfHorizontalMarginPoints, pdfHorizontalMarginPoints - currentImageY, imgPdfWidth, imgPdfHeight);
+      
+      // Advance to the next section of the image for the next page
+      // Move down by the height of the current page's usable area (page height - top & bottom margins)
+      currentImageY += (pageHeight - (2 * pdfHorizontalMarginPoints)); 
+    }
+
+    pdf.save("Transcription_Report.pdf"); 
+    alert("Transcription Report downloaded successfully!");
+
+  } catch (error) {
+    console.error("Error generating or downloading PDF:", error);
+    alert("Failed to download PDF report. Please try again or check console for details.");
+  } finally {
+    // Re-show elements that were temporarily hidden
+    if (document.body.contains(wrapper)) {
+      document.body.removeChild(wrapper);
+    }
+    const downloadButton = document.getElementById("downloadPDF"); // Re-get reference as it might be out of scope
+    if (downloadButton) downloadButton.style.display = 'block';
+    if (originalTranscriptionContainer) originalTranscriptionContainer.style.display = 'block'; // Re-show original transcription
+  }
+}
+</script>
+
+</body>
+</html>
