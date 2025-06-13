@@ -1157,7 +1157,7 @@
       } else if (areWordsEquivalent(oClean, tClean)) {
         // Word is equivalent (British/American/abbreviation)
         resultHtmlContent += `<span>${t}</span> `;
-      } else if (levenshtein(oClean, tClean) <= 2) {
+      } else if (levenshtein(oClean, tl) <= 2) { // Changed to tl (cleaned typed word) for comparison
         // Spelling mistake (close enough Levenshtein distance on cleaned words)
         resultHtmlContent += `<span class='highlight spelling' data-mistake-type='spelling'>${o} (<b>${t}</b>)</span> `;
         halfMistakes++;
@@ -1350,7 +1350,12 @@ function applyMistakeFilter(filterType) {
 // Custom Modal Implementation (replaces alert/confirm)
 function showModal(message, onConfirm = null) {
     let modal = document.getElementById('customAlertModal');
+    let messagePara;
+    let buttonContainer;
+    let modalContent; // Declare modalContent here for broader scope
+
     if (!modal) {
+        // Create modal if it doesn't exist
         modal = document.createElement('div');
         modal.id = 'customAlertModal';
         modal.style.cssText = `
@@ -1360,14 +1365,14 @@ function showModal(message, onConfirm = null) {
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
+            display: none; /* Initially hide the modal */
             justify-content: center;
             align-items: center;
             z-index: 1000;
         `;
         document.body.appendChild(modal);
 
-        const modalContent = document.createElement('div');
+        modalContent = document.createElement('div'); // Initialize modalContent
         modalContent.style.cssText = `
             background: white;
             padding: 30px;
@@ -1384,85 +1389,71 @@ function showModal(message, onConfirm = null) {
         `;
         modal.appendChild(modalContent);
 
-        const messagePara = document.createElement('p');
+        messagePara = document.createElement('p');
         messagePara.id = 'modalMessage';
         messagePara.style.marginBottom = '20px';
         modalContent.appendChild(messagePara);
 
-        const buttonContainer = document.createElement('div');
+        buttonContainer = document.createElement('div');
+        buttonContainer.id = 'modalButtonContainer';
         modalContent.appendChild(buttonContainer);
 
-        const okButton = document.createElement('button');
-        okButton.textContent = 'OK';
-        okButton.style.cssText = `
-            background-color: var(--primary-blue);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 0 5px;
-        `;
-        okButton.onclick = () => {
-            modal.style.display = 'none';
-            if (onConfirm) onConfirm();
-        };
-        buttonContainer.appendChild(okButton);
-
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancel';
-        cancelButton.style.cssText = `
-            background-color: #6c757d;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 0 5px;
-        `;
-        cancelButton.onclick = () => {
-            modal.style.display = 'none';
-        };
-        // Only add cancel button if onConfirm is provided (making it a confirmation dialog)
-        if (onConfirm) {
-            buttonContainer.appendChild(cancelButton);
-        }
-
-        // Add fade-in animation
-        const styleSheet = document.styleSheets[0];
+        // Add fade-in animation keyframes without checking (to avoid cross-origin error)
+        const styleSheet = document.styleSheets[0]; // Gets the first stylesheet, likely the one embedded in HTML
         const fadeInKeyframes = `@keyframes fadeIn {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }`;
-        styleSheet.insertRule(fadeInKeyframes, styleSheet.cssRules.length);
+        // Ensure the rule is inserted only if it doesn't exist to avoid duplicates
+        // This check is safe because we are checking for a rule in a stylesheet we control/create, not a cross-origin one.
+        let keyframeExists = false;
+        for (let i = 0; i < styleSheet.cssRules.length; i++) {
+            if (styleSheet.cssRules[i].type === CSSRule.KEYFRAMES_RULE && styleSheet.cssRules[i].name === 'fadeIn') {
+                keyframeExists = true;
+                break;
+            }
+        }
+        if (!keyframeExists) {
+            styleSheet.insertRule(fadeInKeyframes, styleSheet.cssRules.length);
+        }
 
     } else {
         // Reuse existing modal
-        modal.style.display = 'flex';
-        modal.querySelector('#modalMessage').textContent = message;
-        const buttonContainer = modal.querySelector('div:last-child');
-        buttonContainer.innerHTML = ''; // Clear existing buttons
+        modalContent = modal.querySelector('div'); // Get existing modalContent
+        messagePara = modal.querySelector('#modalMessage');
+        buttonContainer = modal.querySelector('#modalButtonContainer');
+        if (buttonContainer) buttonContainer.innerHTML = ''; // Clear existing buttons if reusing
+    }
 
-        const okButton = document.createElement('button');
-        okButton.textContent = 'OK';
-        okButton.style.cssText = `
-            background-color: var(--primary-blue);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 0 5px;
-        `;
-        okButton.onclick = () => {
-            modal.style.display = 'none';
-            if (onConfirm) onConfirm();
-        };
+    // Set the message text
+    if (messagePara) {
+        messagePara.textContent = message;
+    }
+
+    // Create and append OK button
+    const okButton = document.createElement('button');
+    okButton.textContent = 'OK';
+    okButton.style.cssText = `
+        background-color: var(--primary-blue);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        margin: 0 5px;
+    `;
+    okButton.onclick = () => {
+        modal.style.display = 'none';
+        if (onConfirm) onConfirm();
+    };
+    if (buttonContainer) { // Ensure buttonContainer exists before appending
         buttonContainer.appendChild(okButton);
+    }
 
+
+    // Create and append Cancel button if onConfirm is provided
+    if (onConfirm) {
         const cancelButton = document.createElement('button');
         cancelButton.textContent = 'Cancel';
         cancelButton.style.cssText = `
@@ -1478,13 +1469,14 @@ function showModal(message, onConfirm = null) {
         cancelButton.onclick = () => {
             modal.style.display = 'none';
         };
-        if (onConfirm) {
+        if (buttonContainer) { // Ensure buttonContainer exists before appending
             buttonContainer.appendChild(cancelButton);
         }
     }
+
+    // FINALLY, make the modal visible
+    modal.style.display = 'flex'; 
 }
-
-
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1597,4 +1589,3 @@ async function downloadPDFReport() {
 
 </body>
 </html>
-
