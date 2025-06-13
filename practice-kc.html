@@ -1071,6 +1071,12 @@ function togglePlay() {
     btn.classList.add('paused'); /* Add class for red background */
     btn.textContent = '▶️ Play'; /* Change text to Play */
     clearInterval(progressInterval);
+  } else {
+    // If paused, play the video
+    player.playVideo();
+    btn.classList.remove('paused'); /* Remove class for blue background */
+    btn.textContent = '⏸️ Pause'; /* Change text to Pause */
+    trackProgress(); // Restart tracking progress
   }
 }
 
