@@ -318,10 +318,10 @@
 
     .transcription-details {
       display: flex; /* Changed from grid to flex for better control over spacing/wrapping for the boxes */
-      justify-content: center; /* Center the items horizontally */
+      justify-content: center; /* Center the boxes horizontally */
       flex-wrap: wrap; /* Allow boxes to wrap to next line */
       gap: 15px; /* Spacing between the boxes */
-      margin-top: 20px; /* Add some top margin */
+      margin-top: 20px; /* Space above the boxes */
     }
 
     .transcription-details div {
@@ -382,9 +382,9 @@
     /* Highlight styles - REVERTED TO ORIGINAL COLORS */
     .highlight {
       padding: 2px 5px;
-      border-radius: 3px;
+      border-radius: 3px; /* Original border radius */
       display: inline-block;
-      margin: 0 2px;
+      margin: 0 2px; /* Original margin */
       font-weight: 500;
     }
     .extra { background-color: #fbb6ce; }
@@ -469,16 +469,9 @@
     <select id="speed">
         <option value="original">Original Speed</option>
         <option value="60">60 WPM</option>
-        <option value="70">70 WPM</option>
         <option selected="" value="80">80 WPM</option>
-        <option value="90">90 WPM</option>
         <option value="100">100 WPM</option>
-        <option value="110">110 WPM</option>
         <option value="120">120 WPM</option>
-        <option value="130">130 WPM</option>
-        <option value="140">140 WPM</option>
-        <option value="150">150 WPM</option>
-        <option value="160">160 WPM</option>
     </select>
     <button onclick="loadVideo()">▶️ Load Video</button>
     
@@ -538,7 +531,7 @@
 
 <script>
   const firebaseConfig = {
-    apiKey: "AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9N4-cpE", // Replace with your actual Firebase API Key
+    apiKey: "AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE",
     authDomain: "checkmysteno.firebaseapp.com",
     projectId: "checkmysteno",
     storageBucket: "checkmysteno.appspot.com",
@@ -568,11 +561,7 @@
   function loadVideo() {
     const url = document.getElementById('ytlink').value.trim();
     const videoId = extractVideoID(url);
-    if (!videoId) {
-        // Use a custom modal instead of alert for better UX
-        showModal("Invalid YouTube URL. Please enter a valid YouTube video link.");
-        return;
-    }
+    if (!videoId) return alert("Invalid YouTube URL");
 
     if (!player) {
       player = new YT.Player('player', {
@@ -651,10 +640,7 @@
   function loadTranscript() {
     const vol = document.getElementById('volume').value;
     const tran = document.getElementById('transcript').value;
-    if (!vol || !tran) {
-        showModal("Please select Volume and Transcript.");
-        return;
-    }
+    if (!vol || !tran) return alert("Please select Volume and Transcript.");
 
     // Set global variables for volume and transcript
     g_vol = vol;
@@ -683,13 +669,10 @@
           document.getElementById('typingBox').removeEventListener('keydown', handleFirstKeydown); 
           document.getElementById('typingBox').addEventListener('keydown', handleFirstKeydown);
         } else {
-          showModal("Transcript not found.");
+          alert("Transcript not found.");
         }
       })
-      .catch(err => {
-        console.error("Error fetching data: ", err);
-        showModal("Error fetching data: " + err.message);
-      });
+      .catch(err => alert("Error fetching data: " + err));
   }
 
   function handleFirstKeydown() {
@@ -710,7 +693,7 @@
       if (--timeLeft < 0) {
         clearInterval(timer);
         timer = null;
-        showModal("Time is up! Submitting your transcription.");
+        alert("Time is up! Submitting your transcription.");
         submitTranscription();
       }
     }, 1000);
@@ -728,161 +711,9 @@
     timerStarted = false; 
   }
 
-  // Abbreviation and equivalency groups
-  const abbreviationGroups = [
-    ["honourable", "hon'ble", "honorable", "hon.", "hon"],
-    ["analyse", "analyze"],
-    ["recognise", "recognize"],
-    ["organise", "organize"],
-    ["realise", "realize"],
-    ["apologise", "apologize"],
-    ["optimise", "optimize"],
-    ["maximise", "maximize"],
-    ["minimise", "minimize"],
-    ["utilise", "utilize"],
-    ["legalise", "legalize"],
-    ["capitalise", "capitalize"],
-    ["standardise", "standardize"],
-    ["economise", "economize"],
-    ["colonise", "colonize"],
-    ["favour", "favor"], // Common British/American spelling
-    ["flavour", "flavor"],
-    ["colour", "color"],
-    ["labour", "labor"],
-    ["neighbour", "neighbor"],
-    ["licence", "license"],
-    ["defence", "defense"],
-    ["offence", "offense"],
-    ["practise", "practice"], // verb
-    ["programme", "program"],
-    ["jewellery", "jewelry"],
-    ["acknowledgement", "acknowledgment"],
-    ["judgement", "judgment"],
-    ["instalment", "installment"],
-    ["enrolment", "enrollment"],
-    ["fulfil", "fulfill"],
-    ["skilful", "skillful"],
-    ["appal", "appall"],
-    ["enrol", "enroll"],
-    ["distil", "distill"],
-    ["licenced", "licensed"],
-    ["practised", "practiced"],
-    ["sceptical", "skeptical"],
-    ["grey", "gray"],
-    ["doctor", "dr.", "dr"],
-    ["professor", "prof.", "prof"],
-    ["mister", "mr.", "mr"],
-    ["misses", "mrs.", "mrs"],
-    ["reverend", "rev.", "rev"],
-    ["governor", "gov.", "gov"],
-    ["captain", "capt.", "capt"],
-    ["lieutenant", "lt.", "lt"],
-    ["colonel", "col.", "col"],
-    ["major", "maj.", "maj"],
-    ["minister", "min.", "min"],
-    ["president", "pres.", "pres"],
-    ["secretary", "sec.", "sec"],
-    ["department", "dept.", "dept"],
-    ["organization", "org.", "org"],
-    ["corporation", "corp.", "corp"],
-    ["limited", "ltd.", "ltd"],
-    ["company", "co.", "co"],
-    ["junior", "jr.", "jr"],
-    ["senior", "sr.", "sr"],
-    ["et cetera", "etc.", "etc"],
-    ["that is", "i.e.", "i.e"],
-    ["for example", "e.g.", "e.g"],
-    ["versus", "vs.", "v.", "vs", "v"],
-    ["number", "no.", "no"],
-    ["pm", "p.m.", "pm"],
-    ["am", "a.m.", "am"],
-    ["january", "jan.", "jan"],
-    ["february", "feb.", "feb"],
-    ["march", "mar.", "mar"],
-    ["april", "apr.", "apr"],
-    ["june", "jun.", "jun"],
-    ["july", "jul.", "jul"],
-    ["august", "aug.", "aug"],
-    ["september", "sep.", "sept", "sept."],
-    ["october", "oct.", "oct"],
-    ["november", "nov.", "nov"],
-    ["december", "dec.", "dec"],
-    ["saint", "st.", "st"],
-    ["road", "rd.", "rd"],
-    ["avenue", "ave.", "ave"],
-    ["boulevard", "blvd.", "blvd"],
-    ["feet", "ft.", "ft"],
-    ["inches", "in.", "in"],
-    ["centimeter", "cm.", "cm"],
-    ["kilometer", "km.", "km"],
-    ["kilogram", "kg.", "kg"],
-    ["gram", "g.", "g"],
-    ["milliliter", "ml.", "ml"],
-    ["liter", "l.", "l"],
-    ["pound", "lb.", "lb"],
-    ["ounce", "oz.", "oz"],
-    ["minute", "min.", "min"],
-    ["hour", "hr.", "hr"],
-    ["second", "sec.", "sec"],
-    ["building", "bldg.", "bldg"],
-    ["mount", "mt.", "mt"],
-    ["volume", "vol.", "vol"],
-    ["chapter", "chap.", "chap"],
-    ["figure", "fig.", "fig"],
-    ["page", "p.", "p"],
-    ["pages", "pp.", "pp"]
-  ];
-
-  // Pre-process abbreviation groups into a fast lookup map
-  // Maps cleaned word variations to their canonical form (the first word in the group)
-  const equivalentWordsMap = new Map();
-  abbreviationGroups.forEach(group => {
-    // Ensure all words in the group, including the canonical form, are cleaned consistently
-    const canonicalForm = group[0].toLowerCase().replace(/[.']/g, '');
-    group.forEach(word => {
-      equivalentWordsMap.set(word.toLowerCase().replace(/[.']/g, ''), canonicalForm);
-    });
-  });
-
-  /**
-   * Cleans a word by converting to lowercase and removing specific punctuation.
-   * @param {string} str The input string.
-   * @returns {string} The cleaned string.
-   */
-  const cleanWordForComparison = str => str.toLowerCase().replace(/[.']/g, '');
-
-  /**
-   * Checks if two words are equivalent, considering British/American variations and abbreviations,
-   * using a pre-processed map for efficiency.
-   * @param {string} w1 The first word (can include original punctuation/case).
-   * @param {string} w2 The second word (can include original punctuation/case).
-   * @returns {boolean} True if words are equivalent, false otherwise.
-   */
-  function areWordsEquivalent(w1, w2) {
-    const aClean = cleanWordForComparison(w1);
-    const bClean = cleanWordForComparison(w2);
-
-    if (aClean === bClean) return true; // Direct match after cleaning
-
-    // Look up normalized forms in the pre-processed map
-    const aNormalized = equivalentWordsMap.get(aClean);
-    const bNormalized = equivalentWordsMap.get(bClean);
-
-    // If both have normalized forms and they match, they are equivalent.
-    // This handles cases like "honourable" and "honorable" both mapping to "honourable".
-    if (aNormalized && bNormalized && aNormalized === bNormalized) {
-        return true;
-    }
-    
-    return false;
-  }
-
  function submitTranscription() {
   resetTimer();
-  if (!originalText) {
-      showModal("Please load a transcript first.");
-      return;
-  }
+  if (!originalText) return alert("Please load a transcript first.");
   const typed = document.getElementById('typingBox').value.trim();
   const checkPunct = document.getElementById("checkPunctuation")?.checked ?? false;
 
@@ -890,7 +721,7 @@
   function wordsToNumber(text) {
     const small = {
       zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
-      ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15,
+      ten:10, eleven:11, twelve:12, thirteen:13, fourteen:13, fifteen:15,
       seventeen:17, eighteen:18, nineteen:19
     };
     const tens = {
@@ -984,25 +815,17 @@
   const originalNormalizedPercent = normalizePercent(originalProcessed);
   const typedNormalizedPercent = normalizePercent(typedProcessed);
 
-  // Split into words, ensuring no empty strings from multiple spaces
-  const originalWords = originalNormalizedPercent.split(/\s+/).filter(word => word.length > 0);
-  const typedWords = typedNormalizedPercent.split(/\s+/).filter(word => word.length > 0);
-
+  const originalWords = originalNormalizedPercent.split(/\s+/);
+  const typedWords = typedNormalizedPercent ? typedNormalizedPercent.split(/\s+/) : [];
 
   // Store alignment for filtering
   g_alignment = [];
 
-  // If typedWords are empty or originalWords are empty, populate alignment accordingly
-  if (typedWords.length === 0 && originalWords.length > 0) {
+  // If typedWords are empty, populate alignment as all omissions
+  if (typedWords.length === 0) {
     for (const w of originalWords) {
       g_alignment.push({ type: "del", o: w });
     }
-  } else if (originalWords.length === 0 && typedWords.length > 0) {
-      for (const w of typedWords) {
-          g_alignment.push({ type: "ins", t: w });
-      }
-  } else if (originalWords.length === 0 && typedWords.length === 0) {
-      // Both are empty, no mistakes.
   } else {
     // DP arrays for edit distance
     const dp = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(0));
@@ -1013,8 +836,7 @@
 
     for (let i = 1; i <= originalWords.length; i++) {
       for (let j = 1; j <= typedWords.length; j++) {
-        // Compare words using areWordsEquivalent for flexible matching
-        if (areWordsEquivalent(originalWords[i - 1], typedWords[j - 1])) {
+        if (originalWords[i - 1] === typedWords[j - 1]) {
           dp[i][j] = dp[i - 1][j - 1];
           trace[i][j] = "match";
         } else {
@@ -1043,16 +865,14 @@
         g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
         i--;
       } else {
-        // Fallback for cases where trace might not be perfectly set or
-        // to handle remaining words if one array is exhausted
         if (i > 0) {
-            g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
-            i--;
+          g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
+          i--;
         } else if (j > 0) {
-            g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
-            j--;
+          g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
+          j--;
         } else {
-            break;
+          break;
         }
       }
     }
@@ -1129,41 +949,26 @@
       resultHtmlContent += `<span class='highlight extra' data-mistake-type='extra'>${entry.t}</span> `;
       fullMistakes++;
     } else if (entry.type === "sub") {
-      const clean = str => str.replace(/^[.,!?;:'"]+|[.,!?;:'"]+$/g, ''); // Function to remove leading/trailing punctuation
-      
-      const o = entry.o; // Original word, including original punctuation
-      const t = entry.t; // Typed word, including original punctuation
+      const clean = str => str.replace(/[.,!?;:'"]+$/, '');
+      const o = clean(entry.o);
+      const t = clean(entry.t);
+      const ol = o.toLowerCase(), tl = t.toLowerCase();
 
-      const oClean = clean(o); // Cleaned original word for comparison
-      const tClean = clean(t); // Cleaned typed word for comparison
-      
-      const ol = oClean.toLowerCase();
-      const tl = tClean.toLowerCase();
-
-      // Check for number match first, using original (uncleaned) words
-      if (isNumberMatch(o, t)) { 
-        resultHtmlContent += `<span>${t}</span> `; // No mistake if number match
-      } else if (!checkPunct && oClean === tClean) {
-        // If punctuation check is off and cleaned words are identical, treat as match
-        resultHtmlContent += `<span>${t}</span> `; 
-      } else if (checkPunct && !areWordsEquivalent(oClean, tClean) && (hasComma(o) !== hasComma(t) || hasPunct(o) !== hasPunct(t))) {
-        // Punctuation mistake if punctuation check is on, words are not equivalent after cleaning, and punctuation differs
-        resultHtmlContent += `<span class='highlight punctuation' data-mistake-type='punctuation'>${t}</span> `;
+      if (isNumberMatch(ol, tl)) {
+        resultHtmlContent += `<span>${entry.t}</span> `;
+      } else if (!checkPunct && o === t) {
+        resultHtmlContent += `<span>${entry.t}</span> `;
+      } else if (checkPunct && (hasComma(entry.o) !== hasComma(entry.t) || hasPunct(entry.o) !== hasPunct(entry.t))) {
+        resultHtmlContent += `<span class='highlight punctuation' data-mistake-type='punctuation'>${entry.t}</span> `;
         halfMistakes++;
-      } else if (ol === tl && o !== t) {
-        // Capitalization difference only, after cleaning words and ensuring not an equivalent word already
-        resultHtmlContent += `<span class='highlight capitalization' data-mistake-type='capitalization'>${t}</span> `;
+      } else if (ol === tl && entry.o !== entry.t) {
+        resultHtmlContent += `<span class='highlight capitalization' data-mistake-type='capitalization'>${entry.t}</span> `;
         halfMistakes++;
-      } else if (areWordsEquivalent(oClean, tClean)) {
-        // Word is equivalent (British/American/abbreviation)
-        resultHtmlContent += `<span>${t}</span> `;
-      } else if (levenshtein(oClean, tl) <= 2) { // Changed to tl (cleaned typed word) for comparison
-        // Spelling mistake (close enough Levenshtein distance on cleaned words)
-        resultHtmlContent += `<span class='highlight spelling' data-mistake-type='spelling'>${o} (<b>${t}</b>)</span> `;
+      } else if (levenshtein(o, t) <= 2) {
+        resultHtmlContent += `<span class='highlight spelling' data-mistake-type='spelling'>${entry.o} (<b>${entry.t}</b>)</span> `;
         halfMistakes++;
       } else {
-        // Full substitution mistake
-        resultHtmlContent += `<span class='highlight substitution' data-mistake-type='substitution'>${t}</span> <span class='highlight omission' data-mistake-type='omission'>(${o})</span> `;
+        resultHtmlContent += `<span class='highlight substitution' data-mistake-type='substitution'>${entry.t}</span> <span class='highlight omission' data-mistake-type='omission'>(${entry.o})</span> `;
         fullMistakes += 2; // Treat as 2 mistakes (omission + substitution)
       }
     }
@@ -1259,12 +1064,6 @@ function togglePlay() {
     btn.classList.add('paused'); /* Add class for red background */
     btn.textContent = '▶️ Play'; /* Change text to Play */
     clearInterval(progressInterval);
-  } else {
-    // If paused or any other state, play the video
-    player.playVideo();
-    btn.classList.remove('paused'); /* Remove class for red background */
-    btn.textContent = '⏸️ Pause'; /* Change text to Pause */
-    trackProgress(); // Start tracking progress when playing
   }
 }
 
@@ -1345,137 +1144,6 @@ function applyMistakeFilter(filterType) {
       }
     }
   });
-}
-
-// Custom Modal Implementation (replaces alert/confirm)
-function showModal(message, onConfirm = null) {
-    let modal = document.getElementById('customAlertModal');
-    let messagePara;
-    let buttonContainer;
-    let modalContent; // Declare modalContent here for broader scope
-
-    if (!modal) {
-        // Create modal if it doesn't exist
-        modal = document.createElement('div');
-        modal.id = 'customAlertModal';
-        modal.style.cssText = `
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: none; /* Initially hide the modal */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        `;
-        document.body.appendChild(modal);
-
-        modalContent = document.createElement('div'); // Initialize modalContent
-        modalContent.style.cssText = `
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            font-family: 'Inter', Arial, sans-serif;
-            color: var(--dark-grey);
-            font-size: 1.1em;
-            position: relative;
-            animation: fadeIn 0.3s ease-out;
-        `;
-        modal.appendChild(modalContent);
-
-        messagePara = document.createElement('p');
-        messagePara.id = 'modalMessage';
-        messagePara.style.marginBottom = '20px';
-        modalContent.appendChild(messagePara);
-
-        buttonContainer = document.createElement('div');
-        buttonContainer.id = 'modalButtonContainer';
-        modalContent.appendChild(buttonContainer);
-
-        // Add fade-in animation keyframes without checking (to avoid cross-origin error)
-        const styleSheet = document.styleSheets[0]; // Gets the first stylesheet, likely the one embedded in HTML
-        const fadeInKeyframes = `@keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }`;
-        // Ensure the rule is inserted only if it doesn't exist to avoid duplicates
-        // This check is safe because we are checking for a rule in a stylesheet we control/create, not a cross-origin one.
-        let keyframeExists = false;
-        for (let i = 0; i < styleSheet.cssRules.length; i++) {
-            if (styleSheet.cssRules[i].type === CSSRule.KEYFRAMES_RULE && styleSheet.cssRules[i].name === 'fadeIn') {
-                keyframeExists = true;
-                break;
-            }
-        }
-        if (!keyframeExists) {
-            styleSheet.insertRule(fadeInKeyframes, styleSheet.cssRules.length);
-        }
-
-    } else {
-        // Reuse existing modal
-        modalContent = modal.querySelector('div'); // Get existing modalContent
-        messagePara = modal.querySelector('#modalMessage');
-        buttonContainer = modal.querySelector('#modalButtonContainer');
-        if (buttonContainer) buttonContainer.innerHTML = ''; // Clear existing buttons if reusing
-    }
-
-    // Set the message text
-    if (messagePara) {
-        messagePara.textContent = message;
-    }
-
-    // Create and append OK button
-    const okButton = document.createElement('button');
-    okButton.textContent = 'OK';
-    okButton.style.cssText = `
-        background-color: var(--primary-blue);
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1em;
-        margin: 0 5px;
-    `;
-    okButton.onclick = () => {
-        modal.style.display = 'none';
-        if (onConfirm) onConfirm();
-    };
-    if (buttonContainer) { // Ensure buttonContainer exists before appending
-        buttonContainer.appendChild(okButton);
-    }
-
-
-    // Create and append Cancel button if onConfirm is provided
-    if (onConfirm) {
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancel';
-        cancelButton.style.cssText = `
-            background-color: #6c757d;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 0 5px;
-        `;
-        cancelButton.onclick = () => {
-            modal.style.display = 'none';
-        };
-        if (buttonContainer) { // Ensure buttonContainer exists before appending
-            buttonContainer.appendChild(cancelButton);
-        }
-    }
-
-    // FINALLY, make the modal visible
-    modal.style.display = 'flex'; 
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1570,11 +1238,11 @@ async function downloadPDFReport() {
     }
 
     pdf.save("Transcription_Report.pdf"); 
-    showModal("Transcription Report downloaded successfully!");
+    alert("Transcription Report downloaded successfully!");
 
   } catch (error) {
     console.error("Error generating or downloading PDF:", error);
-    showModal("Failed to download PDF report. Please try again or check console for details.");
+    alert("Failed to download PDF report. Please try again or check console for details.");
   } finally {
     // Re-show elements that were temporarily hidden
     if (document.body.contains(wrapper)) {
