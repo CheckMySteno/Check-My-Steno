@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Features - Check My Steno</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* --- THEME DEFINITIONS (Inherited from your index) --- */
+        :root, body[data-theme="default"] {
+            --primary-bg: #f3f4f6; --text-color: #1e293b; --secondary-text-color: #6b7280;
+            --card-bg: white; --card-shadow: rgba(0, 0, 0, 0.08); --card-border: #e2e8f0;
+            --button-gradient-start: #6366f1; --button-gradient-end: #ec4899;
+        }
+        body[data-theme="galaxy"] {
+            --primary-bg: #0f172a; --text-color: #f8fafc; --secondary-text-color: #94a3b8;
+            --card-bg: #1e293b; --card-shadow: rgba(0, 0, 0, 0.25); --card-border: #334155;
+            --button-gradient-start: #22d3ee; --button-gradient-end: #a78bfa;
+        }
+        body[data-theme="sunset"] { --primary-bg: #fff1f2; --text-color: #4c1d24; --secondary-text-color: #8c2d42; --card-bg: white; --card-shadow: rgba(0, 0, 0, 0.08); --card-border: #fecdd3; --button-gradient-start: #fb923c; --button-gradient-end: #f472b6; }
+        body[data-theme="oceanic"] { --primary-bg: #f0f9ff; --text-color: #082f49; --secondary-text-color: #075985; --card-bg: white; --card-shadow: rgba(0, 0, 0, 0.08); --card-border: #e0f2fe; --button-gradient-start: #22d3ee; --button-gradient-end: #0ea5e9; }
+
+        /* --- GLOBAL STYLES --- */
+        html { scroll-behavior: smooth; }
+        body, html { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+
+        /* --- HEADER --- */
+        .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background-color: var(--card-bg); box-shadow: 0 4px 15px var(--card-shadow); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--text-color); text-decoration: none; }
+        .back-button { padding: 0.7rem 1.5rem; background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end)); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: transform 0.2s; text-decoration: none; }
+        .back-button:hover { transform: scale(1.05); }
+
+        /* --- FEATURES PAGE STYLES --- */
+        main { padding: 4rem 5%; max-width: 1200px; margin: 0 auto; }
+
+        .features-hero {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+        .features-hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .features-hero p {
+            font-size: 1.2rem;
+            color: var(--secondary-text-color);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .feature-section {
+            display: flex;
+            gap: 4rem;
+            align-items: center;
+            margin-bottom: 6rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .feature-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feature-section:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+        .feature-text .tag {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 99px; /* Pill shape */
+            background-color: var(--button-gradient-start);
+            color: white;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .feature-text h2 {
+            font-size: 2.8rem; /* Slightly larger */
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+        .feature-text p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--secondary-text-color);
+            margin-bottom: 2rem;
+            max-width: 500px; /* Constrain line length for readability */
+        }
+        .feature-text ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .feature-text ul li {
+            position: relative;
+            padding-left: 2.2rem; /* More space for the icon */
+            margin-bottom: 1rem;
+            font-weight: 600; /* Bolder text for list items */
+            font-size: 1.1rem;
+            color: var(--text-color);
+        }
+        .feature-text ul li::before {
+            content: '\f058'; /* Font Awesome solid check-circle icon */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            top: 1px;
+            font-size: 1.2rem; /* Larger icon */
+            color: var(--button-gradient-end); /* Pink/Magenta color from your theme */
+        }
+
+        .feature-image {
+            flex: 1.2;
+            text-align: center;
+        }
+        .feature-image img {
+            max-width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px var(--card-shadow);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            object-fit: cover;
+            aspect-ratio: 16/10;
+        }
+        .feature-image img:hover {
+            transform: scale(1.03);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        /* --- CALL TO ACTION --- */
+        .cta-section {
+            text-align: center;
+            background-color: var(--card-bg);
+            padding: 4rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px var(--card-shadow);
+            margin-top: 5rem;
+        }
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-top: 0;
+        }
+        .cta-section p {
+            color: var(--secondary-text-color);
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+        
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 992px) {
+            .feature-section {
+                gap: 2rem;
+            }
+             .feature-text h2 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features-hero h1 {
+                font-size: 2.5rem;
+            }
+            .feature-section,
+            .feature-section:nth-child(even) {
+                flex-direction: column;
+                gap: 2.5rem;
+            }
+            .feature-text {
+                text-align: center;
+            }
+             .feature-text p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .feature-text ul {
+                display: inline-block;
+                text-align: left;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <a href="index.html" class="logo">Check My Steno</a>
+        <a href="index.html" class="back-button"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    </header>
+
+    <main>
+        <section class="features-hero">
+            <h1>Powerful Tools, Unmatched Precision</h1>
+            <p>Discover the suite of features designed to elevate your stenography skills. From in-depth analysis to real-time feedback, we provide everything you need to practice smarter and achieve perfection.</p>
+        </section>
+
+        <!-- Feature 1: SSC Level Mistake Analysis -->
+        <section class="feature-section" id="analysis-feature">
+            <div class="feature-text">
+                <span class="tag">Exam Ready</span>
+                <h2>SSC Level Mistake Analysis</h2>
+                <p>Stop guessing and start understanding. Our proprietary analysis engine is built on official SSC exam criteria to provide the most accurate evaluation of your transcripts. We don't just count errors; we classify them, so you can focus on what matters most.</p>
+                <ul>
+                    <li>Differentiates between Full and Half mistakes.</li>
+                    <li>Highlights omissions, substitutions, and punctuation errors.</li>
+                    <li>Provides a detailed report to pinpoint weaknesses.</li>
+                </ul>
+            </div>
+            <div class="feature-image">
+                <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop" alt="Detailed analysis on a computer screen">
+            </div>
+        </section>
+
+        <!-- Feature 2: One-Click Word Match -->
+        <section class="feature-section" id="word-match-feature">
+            <div class="feature-text">
+                <span class="tag">Efficiency</span>
+                <h2>One-Click Word Match</h2>
+                <p>Verifying your work shouldn't be a chore. With our Word Match tool, you can instantly compare any word in your transcript to the original source text. This simple, powerful feature eliminates ambiguity and drastically speeds up your review process.</p>
+                 <ul>
+                    <li>Instantly highlights corresponding words in both texts.</li>
+                    <li>Perfect for quickly resolving uncertainties.</li>
+                    <li>Reduces proofreading time significantly.</li>
+                </ul>
+            </div>
+            <div class="feature-image">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop" alt="Data comparison and matching interface">
+            </div>
+        </section>
+        
+        <!-- Feature 3: Re-evaluate Your Score -->
+        <section class="feature-section" id="re-evaluation-feature">
+            <div class="feature-text">
+                <span class="tag">Instant Feedback</span>
+                <h2>Re-evaluate Your Score</h2>
+                <p>Why wait to see the impact of your corrections? Our tool offers dynamic, real-time score re-evaluation. As you fix mistakes, your accuracy score updates instantly, providing immediate positive reinforcement and a clear picture of your improvements.</p>
+                <ul>
+                    <li>See your percentage accuracy change as you edit.</li>
+                    <li>Motivates improvement with instant feedback loops.</li>
+                    <li>Helps understand the weight of different types of errors.</li>
+                </ul>
+            </div>
+            <div class="feature-image">
+                <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop" alt="A dashboard showing a score updating in real-time">
+            </div>
+        </section>
+
+        <!-- Feature 4: Performance Analytics (STYLED TO MATCH YOUR IMAGE) -->
+        <section class="feature-section" id="analytics-feature">
+            <div class="feature-text">
+                <span class="tag">Track Growth</span>
+                <h2>Performance Analytics</h2>
+                <p>Turn your practice sessions into actionable insights. Our analytics dashboard visualizes your progress over time, tracking key metrics like accuracy, speed, and common error types. Identify trends and chart a clear path to stenographic excellence.</p>
+                <ul>
+                    <li>Visualize your accuracy trends with beautiful charts.</li>
+                    <li>Identify and track your most frequent error patterns.</li>
+                    <li>Set goals and monitor your improvement over time.</li>
+                </ul>
+            </div>
+            <div class="feature-image">
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1974&auto=format&fit=crop" alt="Growth charts and performance analytics on a screen">
+            </div>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section class="cta-section">
+            <h2>Ready to Transform Your Practice?</h2>
+            <p>Unlock your full potential with the most advanced stenography tools available.</p>
+            <a href="index.html" class="back-button" style="padding: 1rem 2.5rem; font-size: 1.1rem;">Get Started Now</a>
+        </section>
+
+    </main>
+
+    <script>
+        // --- Apply saved theme from index.html ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('selectedTheme') || 'default';
+            document.body.dataset.theme = savedTheme;
+        });
+
+        // --- Simple Scroll Animation ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        document.querySelectorAll('.feature-section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
