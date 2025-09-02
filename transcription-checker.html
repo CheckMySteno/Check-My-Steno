@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Modern Steno Transcription Checker</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- 1. Global & Base Styles --- */
+    :root {
+      --bg-main: #f8fafc;
+      --surface-card: #ffffff;
+      --border-subtle: #e2e8f0;
+      --text-header: #1e293b;
+      --text-body: #334155;
+      --text-muted: #64748b;
+      --primary-accent: #00796b;
+      --accent-red: #ef4444;
+      --accent-amber: #f97316;
+      --hl-additions: #fecdd3;     
+      --hl-omissions: #d9f99d;     
+      --hl-spelling: #fde68a;      
+      --hl-capitalization: #bae6fd; 
+      --hl-punctuation: #ddd6fe;   
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-body);
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .hidden { display: none !important; }
+
+    /* --- 2. Input Section Styles --- */
+    #inputSection {
+      max-width: 900px;
+      margin: 0 auto 30px auto;
+      background: var(--surface-card);
+      padding: 30px;
+      border-radius: 16px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    #mainTitle {
+      font-size: 2.5em;
+      font-weight: 800;
+      color: var(--text-header);
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      resize: vertical;
+    }
+    textarea:focus {
+        outline: none;
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.1);
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+    #submitButton {
+      background-color: var(--primary-accent);
+      color: white;
+      padding: 12px 25px;
+      font-size: 1.1em;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      transition: all 0.2s ease;
+    }
+    #submitButton:hover {
+        background-color: #004d40;
+        transform: translateY(-2px);
+    }
+    #submitButton:disabled {
+        background-color: #a5d6a7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+
+    /* --- 3. Modern Result Sheet Styles --- */
+    #modern-results-view {
+      max-width: 1200px;
+      margin: 30px auto;
+    }
+    .result-sheet-container {
+        background-color: var(--surface-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 35px 45px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    }
+    .result-sheet-container h1 { font-size: 2.25em; font-weight: 800; margin: 0 0 25px 0; color: var(--text-header); }
+    .stats-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }
+    .stats-row { display: flex; flex-wrap: wrap; gap: 12px; }
+    .stat-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 0.95em; color: white; background-color: var(--primary-accent); box-shadow: 0 4px 10px -2px rgba(0, 121, 107, 0.25); }
+    .stat-pill.full-width { flex-grow: 1; font-size: 1.1em; }
+    .stat-pill.red { background-color: var(--accent-red); box-shadow: 0 4px 10px -2px rgba(239, 68, 68, 0.2); }
+    .stat-pill.amber { background-color: var(--accent-amber); box-shadow: 0 4px 10px -2px rgba(249, 115, 22, 0.2); }
+    .stat-pill svg { width: 18px; height: 18px; }
+    .legend-container { display: flex; flex-wrap: wrap; gap: 20px 30px; padding: 25px 0; margin-bottom: 25px; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .legend-item { display: flex; align-items: center; font-size: 0.9em; font-weight: 500; }
+    .legend-color-box { width: 16px; height: 16px; border-radius: 4px; margin-right: 8px; }
+    .result-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+    .filter-section, .action-section { display: flex; align-items: center; gap: 10px; }
+    .filter-section label { font-weight: 600; color: var(--text-body); margin: 0;}
+    .filter-section select, .view-switch-btn { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle); background-color: var(--bg-main); font-weight: 500; color: var(--text-color); cursor: pointer; }
+    .view-switch-btn { transition: all 0.2s; }
+    .view-switch-btn:hover { background-color: #e2e8f0; }
+    .columns { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .columns.view-side-by-side { grid-template-columns: 1fr 1fr; } }
+    .columns.view-top-bottom { grid-template-columns: 1fr; }
+    .col { background: var(--bg-main); border-radius: 12px; padding: 25px; border: 1px solid var(--border-subtle); line-height: 1.7; font-size: 1.1em; word-wrap: break-word; }
+    .col strong { display: block; margin-bottom: 12px; color: var(--text-header); font-weight: 700; }
+    .col p { margin: 0; }
+    .word-wrapper { cursor: pointer; display: inline; transition: background-color 0.2s ease, transform 0.2s ease; position: relative; }
+    .active-highlight { background-color: #4B0082 !important; color: white !important; border-radius: 3px; }
+    .highlight { position: relative; padding: 2px 5px; border-radius: 4px; margin: 0 1px; font-weight: 500; display: inline; transition: transform 0.2s ease-out; }
+    .highlight:hover { transform: scale(1.15); z-index: 5; }
+    .highlight:hover::after { content: attr(data-tooltip-text); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; padding: 8px 12px; background-color: #111827; color: white; font-size: 0.8em; font-weight: 500; border-radius: 6px; white-space: nowrap; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .extra { background: var(--hl-additions); }
+    .omission { background: var(--hl-omissions); }
+    .spelling b { font-weight: 700; color: #166534; }
+    .spelling { background: var(--hl-spelling); }
+    .capitalization { background: var(--hl-capitalization); }
+    .punctuation { background: var(--hl-punctuation); }
+    .hidden-mistake { background: none !important; color: inherit !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; font-weight: normal !important; }
+    .hidden-mistake b { font-weight: normal !important; color: inherit !important; }
+    
+    .action-buttons { text-align: center; padding-top: 30px; display: flex; gap: 15px; justify-content: center; }
+    .action-buttons .primary-btn { background-color: var(--primary-accent); color: white; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+    
+    /* --- 4. Modals & Timer --- */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 20, 30, 0.8); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+    .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+    .modal-content { background-color: var(--surface-card); color: var(--text-color); padding: 30px 40px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid var(--border-subtle); }
+    .modal-content h2 { font-size: 1.8em; margin-top: 0; margin-bottom: 25px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 15px; color: var(--text-header);}
+    .modal-content ul { text-align: left; list-style-position: inside; padding: 0; margin: 0 0 30px 0; line-height: 2.2; color: var(--text-body); }
+    .modal-content ul li::marker { color: var(--primary-accent); }
+    .modal-close-btn { background-color: var(--primary-accent); color: white; padding: 12px 30px; font-size: 1.1em; font-weight: bold; border-radius: 8px; transition: background-color 0.2s; cursor: pointer; border: none; }
+    #timerDisplay { position: fixed; top: 20px; right: 20px; font-size: 20px; background: var(--primary-accent); color: white; padding: 10px 15px; border-radius: 8px; z-index: 100; }
+
+    /* --- Print Styles --- */
+    @media print {
+      body, .result-sheet-container { background: #fff !important; color: #000 !important; box-shadow: none; border: none; }
+      .action-buttons, .result-controls, .legend-container, #inputSection { display: none !important; }
+      .result-sheet-container { padding: 0; max-width: 100%; }
+      .col { border: 1px solid #ccc; max-height: none; overflow-y: visible; }
+      .columns { grid-template-columns: 1fr !important; }
+      #modern-results-view { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="inputSection">
+    <h1 id="mainTitle">Modern Transcription Checker</h1>
+    <label for="original">Original Passage:</label>
+    <textarea id="original" placeholder="Paste the original text here..."></textarea>
+    <label for="typed">Your Transcription:</label>
+    <textarea id="typed" placeholder="Paste or type your transcription here..."></textarea>
+    <label style="font-weight: normal; display: inline-flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="includeComma"> Count comma (,) mistakes
+    </label>
+    <button id="submitButton">Check Accuracy</button>
+  </div>
+
+  <div id="modern-results-view" class="hidden">
+    <div id="resultSheetContainer"></div>
+    <div class="action-buttons">
+      <button id="printReportBtn" class="primary-btn">Download Report</button>
+      <button id="tryAnotherBtn" class="primary-btn">Start New Comparison</button>
+    </div>
+  </div>
+
+  <div id="instructions-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Welcome to the Modern Transcription Checker!</h2>
+        <ul>
+            <li><b>Step 1:</b> Paste the original dictation text into the "Original Passage" box.</li>
+            <li><b>Step 2:</b> Type or paste your transcribed text into the "Your Transcription" box.</li>
+            <li><b>Step 3:</b> Click "Check Accuracy" to see a detailed, interactive report.</li>
+            <li><b>Timer Mode:</b> Pasting into the top box starts an optional 50-minute typing timer.</li>
+            <li><b>Re-evaluate:</b> On the results page, you can edit the original text and re-check your score.</li>
+        </ul>
+        <button id="close-instructions-btn" class="modal-close-btn">Got it, Let's Start!</button>
+    </div>
+  </div>
+
+<script>
+    let g_alignment = [];
+    let g_lastTypedText = "";
+    let timerInterval;
+    let transcriptionTimerTotalTime = 0, timeLeft = 0;
+
+    // --- EXACT CORE LOGIC TRANSPLANTED FROM KC CHECKER ---
+
+    const abbreviationGroups = [["&", "and"], ["%", "percent", "per-cent", "per cent"], ["honourable", "hon'ble", "honble", "hon"], ["doctor", "dr"], ["mister", "mr"], ["misses", "mrs"], ["governments", "govts"], ["government", "govt"], ["special", "spl"], ["through", "thru"], ["department", "dept"], ["association", "assoc"], ["rupees", "rs"], ["rupee", "re"], ["advertisement", "advt"], ["additional", "addl"], ["secretary", "secy"], ["versus", "vs"], ["limited", "ltd"], ["private", "pvt"], ["number", "no"], ["ma'am", "madam"], ["first", "1st"], ["second", "2nd"], ["third", "3rd"]];
+    const numberWordsMap = { "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90, "hundred": 100, "thousand": 1000, "lakh": 100000, "million": 1000000, "crore": 10000000, "billion": 1000000000 };
+    
+    function levenshtein(a, b) {
+        if (!a || !b) return (a || "").length + (b || "").length;
+        const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+        for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+        for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+            }
+        }
+        return dp[a.length][b.length];
+    }
+
+    function areWordsEquivalent(w1, w2) {
+        const clean = s => (s || "").toLowerCase().replace(/[.,'"]+/g, "");
+        const a = clean(w1);
+        const b = clean(w2);
+        if (a === b) return true;
+        for (let group of abbreviationGroups) {
+            const cleanedGroup = group.map(clean);
+            if (cleanedGroup.includes(a) && cleanedGroup.includes(b)) return true;
+        }
+        return false;
+    }
+
+    function wordToNumber(word) {
+        const cleanWord = (word || "").toLowerCase().replace(/[.,()!?;:'"]+$/, '').replace(/^[.,()!?;:'"]+/, '');
+        if (numberWordsMap[cleanWord] !== undefined) return numberWordsMap[cleanWord];
+        if (!isNaN(parseFloat(cleanWord)) && isFinite(cleanWord)) return parseFloat(cleanWord);
+        return null;
+    }
+    
+    function getSubstitutionCost(o, t) {
+        const num_o = wordToNumber(o);
+        const num_t = wordToNumber(t);
+        if (num_o !== null && num_t !== null && num_o === num_t) return 0;
+
+        if (areWordsEquivalent(o, t)) return 0;
+        
+        const o_clean = o.replace(/[.,]$/, '');
+        const t_clean = t.replace(/[.,]$/, '');
+
+        if (o_clean.toLowerCase() === t_clean.toLowerCase()) return 0;
+        
+        if (levenshtein(o_clean.toLowerCase(), t_clean.toLowerCase()) <= 3) return 0.5;
+
+        return 100; // High cost for non-equivalent substitutions
+    }
+
+    function escapeHtml(s = "") {
+        return s.toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function submitTranscription() {
+        const originalText = document.getElementById("original").value.trim();
+        const typedText = document.getElementById("typed").value.trim();
+        
+        if (!originalText || !typedText) {
+            return alert("Please fill in both the original and transcription text boxes.");
+        }
+        
+        const submitBtn = document.getElementById('submitButton');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Calculating...';
+
+        setTimeout(() => {
+            try {
+                clearInterval(timerInterval);
+                const timerDisplay = document.getElementById('timerDisplay');
+                if (timerDisplay) timerDisplay.remove();
+
+                g_lastTypedText = typedText;
+                calculateAndDisplayResults(originalText, typedText);
+            } catch (e) {
+                console.error("Error during calculation:", e);
+                alert("An error occurred during calculation. Please check the console for details.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Check Accuracy';
+            }
+        }, 10);
+    }
+
+    function calculateAndDisplayResults(originalTextForEval, typedTextForEval) {
+      const timeTakenSeconds = (transcriptionTimerTotalTime - timeLeft) > 0 ? (transcriptionTimerTotalTime - timeLeft) : 0;
+      
+      const originalWords = originalTextForEval.trim().split(/\s+/).filter(Boolean);
+      const typedWords = typedTextForEval.trim().split(/\s+/).filter(Boolean);
+      
+      g_alignment = [];
+
+      if (originalWords.length > 0 && typedWords.length > 0) {
+          const dp = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(0));
+          const trace = Array.from({ length: originalWords.length + 1 }, () => Array(typedWords.length + 1).fill(""));
+          for (let i = 0; i <= originalWords.length; i++) { dp[i][0] = i; trace[i][0] = 'del'; }
+          for (let j = 0; j <= typedWords.length; j++) { dp[0][j] = j; trace[0][j] = 'ins'; }
+
+          for (let i = 1; i <= originalWords.length; i++) {
+              for (let j = 1; j <= typedWords.length; j++) {
+                  const cost = getSubstitutionCost(originalWords[i - 1], typedWords[j - 1]);
+                  const subCost = dp[i - 1][j - 1] + cost;
+                  const insCost = dp[i][j - 1] + 1;
+                  const delCost = dp[i - 1][j] + 1;
+                  const minCost = Math.min(subCost, insCost, delCost);
+                  dp[i][j] = minCost;
+
+                  if (minCost === subCost) trace[i][j] = (cost === 0) ? "match" : "sub";
+                  else if (minCost === insCost) trace[i][j] = "ins";
+                  else trace[i][j] = "del";
+              }
+          }
+          
+          let i = originalWords.length, j = typedWords.length;
+          while (i > 0 || j > 0) {
+              const action = trace[i]?.[j] || (i > 0 ? 'del' : 'ins');
+              if ((action === "match" || action === "sub") && i > 0 && j > 0) {
+                  g_alignment.unshift({ type: action, o: originalWords[i - 1], t: typedWords[j - 1] });
+                  i--; j--;
+              } else if ((action === "ins" || i === 0) && j > 0) {
+                  g_alignment.unshift({ type: "ins", t: typedWords[j - 1] });
+                  j--;
+              } else if ((action === "del" || j === 0) && i > 0) {
+                  g_alignment.unshift({ type: "del", o: originalWords[i - 1] });
+                  i--;
+              } else { break; }
+          }
+      } else if (originalWords.length > 0) {
+          originalWords.forEach(w => g_alignment.push({ type: "del", o: w }));
+      } else if (typedWords.length > 0) {
+          typedWords.forEach(w => g_alignment.push({ type: "ins", t: w }));
+      }
+
+      let fullMistakes = 0, halfMistakes = 0, resultHtmlContent = "";
+      for (let k = 0; k < g_alignment.length; k++) {
+          const entry = g_alignment[k];
+          let wordHtml = '', tooltipText = '';
+
+          if (entry.type === "match") {
+              const o = entry.o, t = entry.t;
+              const oBase = o.replace(/[.,]$/, ''), tBase = t.replace(/[.,]$/, '');
+              let mistakeHandled = false;
+              if (oBase.toLowerCase() === tBase.toLowerCase()) {
+                  if (oBase !== tBase) {
+                      tooltipText = `Capitalization: Typed "${escapeHtml(t)}" (was "${escapeHtml(o)}")`;
+                      wordHtml = `<span class='highlight capitalization' data-mistake-type='capitalization' data-tooltip-text='${tooltipText}'>${escapeHtml(t)}</span>`;
+                      halfMistakes++; mistakeHandled = true;
+                  }
+                  if (!mistakeHandled) {
+                      const oHasDot = o.endsWith('.'), tHasDot = t.endsWith('.');
+                      const oHasComma = o.endsWith(','), tHasComma = t.endsWith(',');
+                      const dotMismatch = oHasDot !== tHasDot;
+                      const commaMismatch = document.getElementById("includeComma").checked && (oHasComma !== tHasComma);
+                      if (dotMismatch || commaMismatch) {
+                         tooltipText = `Punctuation: Typed "${escapeHtml(t)}" (was "${escapeHtml(o)}")`;
+                         wordHtml = `<span class='highlight punctuation' data-mistake-type='punctuation' data-tooltip-text='${tooltipText}'>${escapeHtml(t)}</span>`;
+                         halfMistakes++; mistakeHandled = true;
+                      }
+                  }
+              }
+              if (!mistakeHandled) { wordHtml = `<span>${escapeHtml(t) || ''}</span>`; tooltipText = "Correct"; }
+          } else if (entry.type === "del") {
+              tooltipText = `Omitted: "${escapeHtml(entry.o)}"`;
+              wordHtml = `<span class='highlight omission' data-mistake-type='omission' data-tooltip-text='${tooltipText}'>(${escapeHtml(entry.o)})</span>`;
+              fullMistakes++;
+          } else if (entry.type === "ins") {
+              tooltipText = `Extra Word: "${escapeHtml(entry.t)}"`;
+              wordHtml = `<span class='highlight extra' data-mistake-type='extra' data-tooltip-text='${tooltipText}'>${escapeHtml(entry.t)}</span>`;
+              fullMistakes++;
+          } else if (entry.type === "sub") {
+              const oClean = entry.o.replace(/[.,]$/, ''), tClean = entry.t.replace(/[.,]$/, '');
+              if (levenshtein(oClean.toLowerCase(), tClean.toLowerCase()) <= 3) {
+                  tooltipText = `Spelling: Typed "${escapeHtml(entry.t)}" (was "${escapeHtml(entry.o)}")`;
+                  wordHtml = `<span class='highlight spelling' data-mistake-type='spelling' data-tooltip-text='${tooltipText}'>${escapeHtml(entry.t)} (<b>${escapeHtml(entry.o)}</b>)</span>`;
+                  halfMistakes++;
+              } else {
+                  tooltipText = `Substitution: Typed "${escapeHtml(entry.t)}" (was "${escapeHtml(entry.o)}")`;
+                  wordHtml = `<span class='highlight extra' data-mistake-type='extra' data-tooltip-text='${tooltipText}'>${escapeHtml(entry.t)}</span>`;
+                  fullMistakes++;
+              }
+          }
+          resultHtmlContent += `<span class="word-wrapper" data-index="${k}">${wordHtml}</span> `;
+      }
+
+      const totalWords = originalWords.length;
+      const typedWordCount = typedWords.length;
+      const mistakeScore = fullMistakes + halfMistakes * 0.5;
+      const accuracy = totalWords > 0 ? Math.max(0, (((totalWords - mistakeScore) / totalWords) * 100)).toFixed(2) : "0.00";
+      const typingSpeed = timeTakenSeconds > 0 ? (typedWordCount / (timeTakenSeconds / 60)).toFixed(2) : "N/A";
+      
+      const resultData = { totalWords, typedWords: typedWordCount, fullMistakes, halfMistakes, mistakePercent: (totalWords > 0 ? (mistakeScore / totalWords * 100) : 0).toFixed(2), accuracy, typingSpeed, highlightedHtml: resultHtmlContent };
+      
+      renderResultSheet(resultData, originalTextForEval);
+      document.getElementById("inputSection").classList.add("hidden");
+      document.getElementById("modern-results-view").classList.remove("hidden");
+    }
+
+    function renderResultSheet(data, originalTextForDisplay) {
+        const container = document.getElementById('resultSheetContainer');
+        let originalTextHtml = g_alignment.map((entry, index) => 
+            (entry.type === 'ins') ? '' : `<span class="word-wrapper" data-index="${index}">${escapeHtml(entry.o || '')}</span>`
+        ).join(' ');
+
+        container.innerHTML = `
+            <div class="result-sheet-container">
+                <h1>Result Sheet:</h1>
+                <div class="stats-container">
+                    <div class="stats-row">
+                        <div class="stat-pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>Total Words: ${data.totalWords}</div>
+                        <div class="stat-pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13.25a.75.75 0 00-1.5 0v6.5c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75v-5.5z" clip-rule="evenodd" /></svg>Typing Speed: ${data.typingSpeed} WPM</div>
+                        <div class="stat-pill red"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" /></svg>Full Mistakes: ${data.fullMistakes}</div>
+                        <div class="stat-pill amber"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>Half Mistakes: ${data.halfMistakes}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-pill">Total % of Mistakes: ${data.mistakePercent}%</div>
+                        <div class="stat-pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>Accuracy: ${data.accuracy}%</div>
+                    </div>
+                </div>
+                <div class="legend-container">
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: var(--hl-additions);"></span> Additions/Substitutions</div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: var(--hl-omissions);"></span> Omissions</div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: var(--hl-spelling);"></span> Spelling</div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: var(--hl-capitalization);"></span> Capitalization</div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: var(--hl-punctuation);"></span> Punctuation</div>
+                </div>
+                <div class="result-controls">
+                    <div class="filter-section">
+                        <label for="mistakeFilter">Filter:</label>
+                        <select id="mistakeFilter"><option value="all">Show All</option><option value="omission-substitution">Omissions & Additions</option><option value="omission">Omissions Only</option><option value="extra">Additions Only</option><option value="spelling">Spelling Only</option><option value="capitalization">Capitalization Only</option><option value="punctuation">Punctuation Only</option></select>
+                    </div>
+                    <div class="action-section"><button id="reevaluateBtn" class="view-switch-btn">Re-evaluate Score</button></div>
+                    <button id="viewSwitchBtn" class="view-switch-btn">Switch to Top/Bottom View</button>
+                </div>
+                <div id="comparisonColumns" class="columns view-side-by-side">
+                    <div class="col" id="typedCol"><strong>Your Transcription:</strong><p>${data.highlightedHtml}</p></div>
+                    <div class="col" id="originalCol"><strong>Original Text (Click to edit):</strong><p id="editableOriginalText" contenteditable="true">${originalTextHtml}</p></div>
+                </div>
+            </div>`;
+        initializeResultInteractivity();
+    }
+    
+    function initializeResultInteractivity() {
+        document.getElementById('mistakeFilter').addEventListener('change', (e) => filterMistakes(e.target.value));
+        document.getElementById('reevaluateBtn').addEventListener('click', reevaluateScore);
+        
+        const switchBtn = document.getElementById('viewSwitchBtn');
+        const columnsContainer = document.getElementById('comparisonColumns');
+        switchBtn.addEventListener('click', () => {
+            const isSideBySide = columnsContainer.classList.contains('view-side-by-side');
+            columnsContainer.classList.toggle('view-side-by-side', !isSideBySide);
+            columnsContainer.classList.toggle('view-top-bottom', isSideBySide);
+            switchBtn.textContent = isSideBySide ? 'Switch to Side-by-Side View' : 'Switch to Top/Bottom View';
+        });
+
+        columnsContainer.addEventListener('click', (e) => {
+            const target = e.target.closest('.word-wrapper');
+            if (!target) return;
+            const wordIndex = target.dataset.index;
+            if (wordIndex === null) return;
+            document.querySelectorAll('.active-highlight').forEach(el => el.classList.remove('active-highlight'));
+            document.querySelectorAll(`.word-wrapper[data-index="${wordIndex}"]`).forEach(el => {
+                el.classList.add('active-highlight');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+    }
+
+    function reevaluateScore() {
+        const correctedOriginalText = document.getElementById('editableOriginalText').innerText;
+        if (!correctedOriginalText || !g_lastTypedText) return alert("Could not find text to re-evaluate.");
+        calculateAndDisplayResults(correctedOriginalText, g_lastTypedText);
+        alert("Score has been re-evaluated with your corrections.");
+    }
+
+    function filterMistakes(type) {
+        document.querySelectorAll('.active-highlight').forEach(el => el.classList.remove('active-highlight'));
+        const spans = document.querySelectorAll('#typedCol .highlight');
+        spans.forEach(span => {
+            const mistakeType = span.getAttribute('data-mistake-type');
+            if (type === "all") span.classList.remove('hidden-mistake');
+            else if (type === "omission-substitution") span.classList.toggle('hidden-mistake', !(mistakeType === 'omission' || mistakeType === 'extra'));
+            else span.classList.toggle('hidden-mistake', mistakeType !== type);
+        });
+    }
+
+    // --- UI & Event Handlers ---
+    
+    function goHome() {
+        document.getElementById("inputSection").classList.remove("hidden");
+        document.getElementById("modern-results-view").classList.add("hidden");
+        document.getElementById("original").value = "";
+        document.getElementById("typed").value = "";
+        document.getElementById("original").classList.remove("hidden");
+        document.querySelector("label[for='original']").classList.remove("hidden");
+        const typedTextarea = document.getElementById("typed");
+        typedTextarea.style.height = "150px";
+        transcriptionTimerTotalTime = 0;
+        timeLeft = 0;
+    }
+
+    function startTypingTimer(durationMinutes = 50) {
+      const timerDisplay = document.createElement('div');
+      timerDisplay.id = 'timerDisplay';
+      document.body.appendChild(timerDisplay);
+
+      transcriptionTimerTotalTime = durationMinutes * 60;
+      timeLeft = transcriptionTimerTotalTime;
+      
+      function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerDisplay.textContent = `Time Left: ${minutes}m ${seconds}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerDisplay.textContent = "Time's up!";
+          submitTranscription();
+          return;
+        }
+        timeLeft--;
+      }
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('submitButton').addEventListener('click', submitTranscription);
+        document.getElementById('tryAnotherBtn').addEventListener('click', goHome);
+        document.getElementById('printReportBtn').addEventListener('click', () => window.print());
+
+        if (!localStorage.getItem('hasSeenInstructions')) {
+            document.getElementById('instructions-modal').classList.add('visible');
+        }
+        document.getElementById('close-instructions-btn').addEventListener('click', () => {
+            document.getElementById('instructions-modal').classList.remove('visible');
+            localStorage.setItem('hasSeenInstructions', 'true');
+        });
+
+        document.getElementById("original").addEventListener("paste", function () {
+            setTimeout(() => {
+                document.getElementById("original").classList.add("hidden");
+                document.querySelector("label[for='original']").classList.add("hidden");
+                const typedTextarea = document.getElementById("typed");
+                typedTextarea.style.height = "calc(100vh - 200px)";
+                typedTextarea.focus();
+                startTypingTimer(50);
+            }, 100);
+        });
+    });
+</script>
+</body>
+</html>
