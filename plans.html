@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launching Soon!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --primary-glow: #a855f7;
+            --secondary-glow: #3b82f6;
+            --background-start: #111827;
+            --background-end: #1e1b4b;
+            --card-background: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-color: #f59e0b;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --info-color: #3b82f6; /* Added for the new message */
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes slideUpFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 10px 15px rgba(245, 158, 11, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, var(--background-start), var(--background-end), var(--primary-glow), var(--secondary-glow));
+            background-size: 400% 400%;
+            animation: gradient-animation 15s ease infinite;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        .main-content {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .left-panel {
+            text-align: left;
+            animation: slideUpFadeIn 0.8s ease-out forwards;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: slideUpFadeIn 0.8s ease-out 0.2s forwards;
+            opacity: 0; /* Start hidden for animation */
+        }
+
+        .card {
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 0 0 1rem 0;
+            line-height: 1.1;
+            background: linear-gradient(90deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        h1 span {
+            display: block;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .left-panel p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        #countdown {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .time-box {
+            text-align: center;
+        }
+
+        .time-box span {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--accent-color);
+        }
+
+        .time-box p {
+            font-size: 0.8rem;
+            margin-top: 0.2rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-primary);
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 80px;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            text-align: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        #secret-option {
+            background: var(--accent-color);
+            color: var(--background-start);
+            font-weight: 600;
+            animation: pulse 2.5s infinite;
+        }
+        
+        .feedback-message {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .feedback-message.success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .feedback-message.error {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .feedback-message.info {
+            background-color: var(--info-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+                text-align: center;
+            }
+            .left-panel {
+                text-align: center;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+            #countdown {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="left-panel">
+            <h1>Something new is <span>coming soon.</span></h1>
+            <p>Our exclusive subscription plans are about to go live. We're excited to share them with you!</p>
+            <div id="countdown">
+                <div class="time-box"><span id="days">0</span><p>Days</p></div>
+                <div class="time-box"><span id="hours">0</span><p>Hours</p></div>
+                <div class="time-box"><span id="minutes">0</span><p>Minutes</p></div>
+                <div class="time-box"><span id="seconds">0</span><p>Seconds</p></div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <section class="card">
+                <h3>Share Your Website Experience</h3>
+                <form id="feedbackForm">
+                    <textarea id="message" placeholder="How has your experience on the website been so far? We'd love to know!" required></textarea>
+                    <button type="submit" class="btn">Send Anonymously</button>
+                    <div id="form-feedback" class="feedback-message"></div>
+                </form>
+            </section>
+
+            <section class="card pricing-poll">
+                <h3>Take a guess: What's our monthly price?</h3>
+                <div class="options">
+                    <div class="option" data-price="149" onclick="checkPrice(this)">₹149</div>
+                    <div class="option" data-price="199" onclick="checkPrice(this)">₹199</div>
+                    <div class="option" data-price="249" onclick="checkPrice(this)">₹249</div>
+                    <div id="secret-option" class="option" data-price="secret" onclick="checkPrice(this)">🤫 Reveal Secret Price</div>
+                </div>
+                <div id="price-feedback" class="feedback-message"></div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE",
+            authDomain: "checkmysteno.firebaseapp.com",
+            projectId: "checkmysteno",
+            storageBucket: "checkmysteno.firebasestorage.app",
+            messagingSenderId: "719325115943",
+            appId: "1:719325115943:web:0dd50a67978816d42a8002"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- Countdown Timer ---
+        const countdown = () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const now = new Date().getTime();
+            const distance = tomorrow - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').innerText = String(days).padStart(2, '0');
+            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+
+            if (distance < 0) {
+                clearInterval(interval);
+                document.querySelector('.left-panel').innerHTML = "<h1>We are live!</h1>";
+            }
+        };
+
+        const interval = setInterval(countdown, 1000);
+        countdown();
+
+        // --- Anonymous Feedback Form ---
+        document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = document.getElementById('message').value;
+            const feedbackEl = document.getElementById('form-feedback');
+            const submitBtn = e.target.querySelector('.btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            try {
+                await db.collection('feedback').add({
+                    message: message,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                feedbackEl.textContent = 'Thanks! We got your message.';
+                feedbackEl.className = 'feedback-message success';
+                feedbackEl.style.display = 'block';
+                document.getElementById('feedbackForm').reset();
+            } catch (error) {
+                feedbackEl.textContent = 'Oops! Something went wrong.';
+                feedbackEl.className = 'feedback-message error';
+                feedbackEl.style.display = 'block';
+                console.error("Error sending feedback: ", error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Anonymously';
+            }
+        });
+
+        // --- Pricing Poll ---
+        function checkPrice(element) {
+            const price = element.dataset.price;
+            const feedbackEl = document.getElementById('price-feedback');
+
+            if (price === 'secret') {
+                feedbackEl.textContent = 'The secret will be revealed at 12:00 AM!';
+                feedbackEl.className = 'feedback-message info';
+            } else {
+                feedbackEl.textContent = 'Not quite! That\'s not the one. Try again.';
+                feedbackEl.className = 'feedback-message error';
+            }
+            feedbackEl.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
