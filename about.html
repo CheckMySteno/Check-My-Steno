@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Check My Steno</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 3rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        .header p {
+            font-size: 1.25rem;
+            max-width: 700px;
+            margin: 20px auto 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .section {
+            margin-bottom: 60px;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            font-weight: 600;
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #667eea;
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+        .mission-section {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 60px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.1);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .cta-section {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .cta-section p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        .cta-button:hover {
+            background: #764ba2;
+            transform: translateY(-3px);
+        }
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            background-color: #f2f2f2;
+            color: #555;
+            border-top: 1px solid #ddd;
+        }
+
+        /* Media query for smaller screens */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header p {
+                font-size: 1.1rem;
+            }
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>💡✨ Still Practicing in the Dark?</h1>
+        <p>We built Check My Steno to bring clarity and confidence to your SSC Steno preparation. Stop guessing. Start mastering.</p>
+    </header>
+
+    <div class="container">
+
+        <section class="mission-section">
+            <h2 class="section-title">Our Mission</h2>
+            <p>The biggest doubt for any SSC Steno aspirant is: “Is my practice really preparing me for exam day?” We exist to solve that problem.</p>
+            <p>Our mission is to provide a hyper-realistic practice environment that empowers every student to identify weaknesses, track progress, and walk into the exam hall with unshakable confidence. We believe that with the right tools, every dedicated aspirant can achieve their dream.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">What Makes It Different</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🖥️</div>
+                    <h3>100% SSC Exam Interface</h3>
+                    <p>We've perfectly cloned the official exam interface—timer, layout, and typing panel. Practice feels like the real test, eliminating exam-day anxiety.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Auto-Checking</h3>
+                    <p>Our intelligent system instantly detects capitalization, spelling, and punctuation errors, recalculating your score live as you make corrections.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>One-Tap Error Finder</h3>
+                    <p>No more endless scrolling. Our unique "Tap → Trace → Fix" system helps you locate and correct errors in seconds, making your practice more efficient.</p>
+                </div>
+                 <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>Fresh, Exam-Based Dictations</h3>
+                    <p>Stay ahead with our weekly supply of fresh progressive and general matter, designed based on the latest SSC exam patterns to keep your preparation relevant.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Complete Preparation Ecosystem</h3>
+                    <p>Track your growth with smart performance charts and access a vast library including 20+ Kailash Chandra volumes and daily dictations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💎</div>
+                    <h3>Advanced & Affordable</h3>
+                    <p>We've combined the most advanced features in the steno market with a price point that is accessible to every aspirant in India. High-quality preparation is for everyone.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <section class="cta-section">
+        <h2>See the Difference for Yourself</h2>
+        <p>Experience the most realistic SSC Steno practice available. Try our Free Forever Demo now—no signup, no barriers.</p>
+        <a href="https://t.ly/CheckMySteno" class="cta-button" target="_blank" rel="noopener noreferrer">🚀 Start Free Practice Now</a>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2024 Check My Steno. All Rights Reserved.</p>
+    </footer>
+
+</body>
+</html>
