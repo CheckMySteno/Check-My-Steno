@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -155,16 +155,6 @@
     @keyframes fade-in-out { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 30% { opacity: 0.9; } 80% { opacity: 0.9; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); } }
     .highlight:hover { transform: scale(1.1); z-index: 5; }
     .highlight:hover::after { content: attr(data-tooltip-text); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; padding: 8px 12px; background-color: #111827; color: white; font-size: 0.8em; font-weight: 500; font-family: 'Inter', sans-serif; border-radius: 6px; white-space: nowrap; z-index: 10; opacity: 1; visibility: visible; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .tour-overlay { position: fixed; inset: 0; background: rgba(11, 18, 32, .8); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
-    .tour-overlay.visible { display: flex; opacity: 1; }
-    .tour-tooltip { position: absolute; background: var(--card); color: var(--text); padding: 15px; border-radius: 8px; z-index: 1001; max-width: 300px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); display: none; }
-    .tour-tooltip.visible { display: block; }
-    .tour-tooltip p { margin: 0 0 12px 0; line-height: 1.5; color: var(--text); }
-    .tour-tooltip-actions { display: flex; justify-content: space-between; align-items: center; }
-    #tour-dots { display: flex; gap: 4px; }
-    #tour-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lock); }
-    #tour-dots .dot.active { background: var(--brand); }
-    .tour-tooltip-actions button { background: var(--brand); color: white; padding: 6px 12px; border-radius: 6px; border:none; cursor: pointer;}
     .action-section .view-switch-btn.exclusive { border-color: #FDB813; color: #FDB813; font-weight: 700; }
     #resultsWelcomeModal .modal-content, #dashboardWelcomeModal .modal-content { max-width: 800px; width: 95%; text-align: left; font-family: 'Inter', sans-serif; border-radius: 12px; padding: 0; overflow: hidden; animation: fadeInScaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border); }
     @keyframes fadeInScaleUp { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -192,7 +182,7 @@
     <div class="container nav">
       <div class="brand"><div class="logo">📝</div><div><div>Check My Steno</div><small>Free Demo</small></div></div>
       <div class="nav-actions">
-        <button id="theme-toggle" class="btn ghost theme-toggle-btn" title="Toggle Theme">🌙</button>
+        <button id="theme-toggle" class="btn ghost theme-toggle-btn" title="Toggle Theme">☀️</button>
         <button class="btn ghost" onclick="showAccessModal()">🔑 Have Access Code?</button>
         <button class="btn primary" onclick="showAccessModal()">Unlock Full Access</button>
       </div>
@@ -245,16 +235,6 @@
   
   <div id="exam-view"></div>
   <div id="instructions-modal" style="display:none; position: fixed; inset: 0; background: rgba(2,6,23,.6); z-index: 50; align-items:center; justify-content:center;"></div>
-
-  <!-- TUTORIAL ELEMENTS -->
-  <div id="tourOverlay" class="tour-overlay"></div>
-  <div id="tourTooltip" class="tour-tooltip">
-      <p id="tourText"></p>
-      <div class="tour-tooltip-actions">
-          <div id="tour-dots"></div>
-          <button id="tourNextBtn">Next</button>
-      </div>
-  </div>
 
   <!-- MODALS -->
   <div id="dashboardWelcomeModal" class="modal-overlay">
@@ -351,7 +331,7 @@
     });
 
     function initializeAll() {
-        setLogoSource(); renderSkeletonLoader(); populateSpeedSelector(); initializeDemo(); initializeTheme(); initializeModals(); initializeKeyboardShortcuts(); initializeTutorial(); bindEventListeners();
+        setLogoSource(); renderSkeletonLoader(); populateSpeedSelector(); initializeDemo(); initializeTheme(); initializeModals(); initializeKeyboardShortcuts(); bindEventListeners();
         incrementVisitorCount();
         if (localStorage.getItem('hideDashboardWelcome') !== 'true') {
             document.getElementById('dashboardWelcomeModal').style.display = 'flex';
@@ -376,20 +356,14 @@
     }
 
     function bindEventListeners() {
-        document.getElementById('btnStartDemo').addEventListener('click', () => { if (DEMO_PASSAGES.length > 0) { if (tutorialState.active && tutorialState.currentStep === 1) tutorialState.currentStep++; loadPractice(DEMO_PASSAGES[0]); } else { alert("Demo passages are still loading. Please wait a moment and try again."); } });
-        document.getElementById('btnResetDemo').addEventListener('click', () => showConfirmModal('Reset Demo Progress?', 'This will permanently delete your saved scores for all demo passages.', () => { localStorage.removeItem('demoProgress'); localStorage.removeItem('demoTutorialCompleted'); renderPassageCards(); }));
+        document.getElementById('btnStartDemo').addEventListener('click', () => { if (DEMO_PASSAGES.length > 0) { loadPractice(DEMO_PASSAGES[0]); } else { alert("Demo passages are still loading. Please wait a moment and try again."); } });
+        document.getElementById('btnResetDemo').addEventListener('click', () => showConfirmModal('Reset Demo Progress?', 'This will permanently delete your saved scores for all demo passages.', () => { localStorage.removeItem('demoProgress'); renderPassageCards(); }));
         document.getElementById('passageSearch').addEventListener('input', filterPassages);
-        document.getElementById('startTranscriptionBtn').addEventListener('click', () => {
-            if (tutorialState.active && tutorialState.currentStep === 3) {
-                tutorialState.currentStep++;
-                endTutorial(true); // Hide current step, keep tutorial active for results page
-            }
-            showInstructions();
-        });
+        document.getElementById('startTranscriptionBtn').addEventListener('click', showInstructions);
         document.getElementById('continue-btn').addEventListener('click', startTranscriptionTest);
         document.getElementById('submitBtn').addEventListener('click', submitTranscription);
         document.getElementById('progressBar').addEventListener('click', (e) => { if(!player?.seekTo || !totalVideoDuration) return; const rect = e.currentTarget.getBoundingClientRect(); player.seekTo((e.clientX - rect.left) / rect.width * totalVideoDuration, true); });
-        document.getElementById('passageList').addEventListener('click', (e) => { const button = e.target.closest('button.primary[data-id]'); if(button) { if (tutorialState.active && tutorialState.currentStep === 1) tutorialState.currentStep++; const p = DEMO_PASSAGES.find(x => x.id === button.dataset.id); if(p) loadPractice(p); } });
+        document.getElementById('passageList').addEventListener('click', (e) => { const button = e.target.closest('button.primary[data-id]'); if(button) { const p = DEMO_PASSAGES.find(x => x.id === button.dataset.id); if(p) loadPractice(p); } });
         const welcomeModal = document.getElementById('resultsWelcomeModal');
         if (welcomeModal) {
             document.getElementById('closeWelcomeBtn').addEventListener('click', () => { if (document.getElementById('dontShowAgainCheckbox').checked) { localStorage.setItem('hideResultsWelcome', 'true'); } welcomeModal.style.display = 'none'; });
@@ -410,7 +384,7 @@
         const photoImg = document.getElementById('candidate-photo-img');
         if (photoImg) photoImg.src = candidatePhoto;
     }
-    function initializeTheme() { const savedTheme = localStorage.getItem('theme') || 'dark'; document.documentElement.setAttribute('data-theme', savedTheme); document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️'; document.getElementById('theme-toggle').addEventListener('click', toggleTheme); }
+    function initializeTheme() { const savedTheme = localStorage.getItem('theme') || 'light'; document.documentElement.setAttribute('data-theme', savedTheme); document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️'; document.getElementById('theme-toggle').addEventListener('click', toggleTheme); }
     function toggleTheme() { const currentTheme = document.documentElement.getAttribute('data-theme'); const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('theme', newTheme); document.getElementById('theme-toggle').textContent = newTheme === 'dark' ? '🌙' : '☀️'; }
     function filterPassages(e) { const searchTerm = e.target.value.toLowerCase(); const passageCards = document.querySelectorAll('#passageList .card'); let visibleCount = 0; passageCards.forEach(card => { const title = card.querySelector('h3').textContent.toLowerCase(); const words = card.querySelector('p').textContent.toLowerCase(); if (title.includes(searchTerm) || words.includes(searchTerm)) { card.style.display = 'block'; visibleCount++; } else { card.style.display = 'none'; } }); document.getElementById('empty-search-state').style.display = (visibleCount === 0 && searchTerm) ? 'block' : 'none'; }
     function populateSpeedSelector() { const selector = document.getElementById('speedSelector'); for (let wpm = 60; wpm <= 160; wpm += 5) { const option = document.createElement('option'); option.value = wpm; option.textContent = `${wpm} WPM`; selector.appendChild(option); } selector.value = '100'; selector.addEventListener('change', handleSpeedChange); }
@@ -427,9 +401,9 @@
     function initializeModals() { ['access-modal', 'confirm-modal', 'dashboardWelcomeModal'].forEach(id => { const modal = document.getElementById(id); modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; }); }); document.getElementById('modal-close-btn').addEventListener('click', hideAccessModal); document.getElementById('confirm-cancel-btn').addEventListener('click', hideConfirmModal); }
     function getDemoProgress() { return JSON.parse(localStorage.getItem('demoProgress') || '{}'); }
     function saveDemoProgress(passageId, accuracy) { const progress = getDemoProgress(); const existingScore = progress[passageId] || 0; if (accuracy > existingScore) { progress[passageId] = accuracy; localStorage.setItem('demoProgress', JSON.stringify(progress)); } }
-    async function initializeDemo() { try { const transcriptsSnapshot = await db.collection("volumes").doc("vol1").collection("transcripts").get(); const audioLinksSnapshot = await db.collection("audioLinks").doc("vol1").collection("transcripts").get(); const audioDataMap = new Map(); audioLinksSnapshot.forEach(doc => audioDataMap.set(doc.id, doc.data())); transcriptsSnapshot.forEach(doc => { const audioData = audioDataMap.get(doc.id); if (audioData) { DEMO_PASSAGES.push({ id: doc.id, title: audioData.title || `Transcript ${doc.id.replace('t','')}`, words: audioData.wordCount || 0, text: doc.data().text, audioUrl: audioData.audioUrl }); } }); DEMO_PASSAGES.sort((a,b) => parseInt(a.id.replace('t','')) - parseInt(b.id.replace('t',''))); document.getElementById('passageListSkeleton').style.display = 'none'; document.getElementById('passageList').style.display = 'grid'; renderPassageCards(); runTutorialStep(tutorialState.currentStep); } catch (error) { document.getElementById('passageListSkeleton').style.display = 'none'; document.getElementById('passageList').innerHTML = `<p style="color:var(--danger);">Error: Could not load demo passages. ${error.message}</p>`; console.error(error); } }
+    async function initializeDemo() { try { const transcriptsSnapshot = await db.collection("volumes").doc("vol1").collection("transcripts").get(); const audioLinksSnapshot = await db.collection("audioLinks").doc("vol1").collection("transcripts").get(); const audioDataMap = new Map(); audioLinksSnapshot.forEach(doc => audioDataMap.set(doc.id, doc.data())); transcriptsSnapshot.forEach(doc => { const audioData = audioDataMap.get(doc.id); if (audioData) { DEMO_PASSAGES.push({ id: doc.id, title: audioData.title || `Transcript ${doc.id.replace('t','')}`, words: audioData.wordCount || 0, text: doc.data().text, audioUrl: audioData.audioUrl }); } }); DEMO_PASSAGES.sort((a,b) => parseInt(a.id.replace('t','')) - parseInt(b.id.replace('t',''))); document.getElementById('passageListSkeleton').style.display = 'none'; document.getElementById('passageList').style.display = 'grid'; renderPassageCards(); } catch (error) { document.getElementById('passageListSkeleton').style.display = 'none'; document.getElementById('passageList').innerHTML = `<p style="color:var(--danger);">Error: Could not load demo passages. ${error.message}</p>`; console.error(error); } }
     function renderPassageCards() { const listEl = document.getElementById('passageList'); if (!DEMO_PASSAGES || DEMO_PASSAGES.length === 0) { listEl.innerHTML = '<p>No demo passages found in Volume 1.</p>'; return; } const progress = getDemoProgress(); listEl.innerHTML = DEMO_PASSAGES.slice(0, 6).map((p) => { const score = progress[p.id]; const isDone = score !== undefined; const bestScore = isDone ? `Best ${parseFloat(score).toFixed(0)}%` : 'Not attempted'; const badgeClass = isDone ? 'done' : 'not-attempted'; return ` <div class="card" data-passage-id="${p.id}" id="passage-${p.id}"> <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"> <div><h3>${p.title}</h3><p>${p.words} words • Demo</p></div> <span class="badge ${badgeClass}">${bestScore}</span> </div> <div class="card-actions"> <button class="btn primary" data-id="${p.id}">Take Demo</button> <button class="btn" onclick="showAccessModal()">Analysis</button> </div> </div>`; }).join(''); }
-    function loadPractice(passage) { g_tran = passage.id; originalText = passage.text; wordCount = passage.words; showView('player-view'); document.getElementById('player-title').textContent = passage.title; document.getElementById('player-subtitle').textContent = `Volume 1 | Transcript ${g_tran.replace('t', '')}`; loadVideo(passage.audioUrl); document.getElementById('startTranscriptionBtn').disabled = false; handleSpeedChange(); runTutorialStep(tutorialState.currentStep); }
+    function loadPractice(passage) { g_tran = passage.id; originalText = passage.text; wordCount = passage.words; showView('player-view'); document.getElementById('player-title').textContent = passage.title; document.getElementById('player-subtitle').textContent = `Volume 1 | Transcript ${g_tran.replace('t', '')}`; loadVideo(passage.audioUrl); document.getElementById('startTranscriptionBtn').disabled = false; handleSpeedChange(); }
     function showView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId).classList.add('active'); const examView = document.getElementById('exam-view'); const mainContainer = document.querySelector('main.container'); if (viewId === 'exam-view') { mainContainer.style.display = 'none'; examView.style.display = 'flex'; } else { mainContainer.style.display = 'block'; examView.style.display = 'none'; if (viewId === 'dashboard-view' && player && typeof player.stopVideo === 'function') { player.stopVideo(); } } }
     function onYouTubeIframeAPIReady() {}
     function extractVideoID(url) { if (typeof url !== 'string') return null; const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/; return (url.match(regex) || [])[1] || null; }
@@ -443,7 +417,7 @@
     function startTranscriptionTest() { document.getElementById('instructions-modal').style.display = 'none'; document.documentElement.requestFullscreen().catch(err => {}); showView('exam-view'); updateTranscriptionTime(); document.getElementById('typingBox').value = ''; document.getElementById('typingBox').focus(); document.getElementById('typingBox').addEventListener('input', handleFirstKeydown, { once: true }); const today = new Date(); document.getElementById('exam-date').innerHTML = `<b>Exam Date:</b> ${today.toLocaleDateString('en-GB')}`; }
     function handleFirstKeydown() { if (!timerStarted) { timerStarted = true; startTimer(); } }
     function startTimer() { if (timer) return; timer = setInterval(() => { if (--timeLeft < 0) { clearInterval(timer); timer = null; timerStarted = false; alert("Time is up!"); submitTranscription(); } else { document.getElementById("typingTimerDisplay").innerText = `Time Left: ${formatTime(timeLeft)}`; } }, 1000); }
-    function goHome() { if (tutorialState.active && tutorialState.currentStep === 5) { endTutorial(false); } showView('dashboard-view'); }
+    function goHome() { showView('dashboard-view'); }
     function normalizeTextForComparison(text) { if (!text) return ""; let normalized = " " + text.toLowerCase() + " "; const replacements = { ' & ': ' and ', ' % ': ' percent ', ' per cent ': ' percent ', ' honourable ': ' hon ', ' honble ': ' hon ', ' hon\'ble ': ' hon ', ' doctor ': ' dr ', ' mister ': ' mr ', ' misses ': ' mrs ', ' governments ': ' govts ', ' government ': ' govt ', ' special ': ' spl ', ' through ': ' thru ', ' department ': ' dept ', ' association ': ' assoc ', ' first ': ' 1st ', ' second ': ' 2nd ', ' third ': ' 3rd ', ' rupees ': ' rs ', ' rupee ': ' re ', ' advertisement ': ' advt ', ' additional ': ' addl ', ' secretary ': ' secy ', ' versus ': ' vs ', ' limited ': ' ltd ', ' private ': ' pvt ', ' number ': ' no ', ' ma\'am ': ' madam ' }; for(const [key, val] of Object.entries(replacements)) { normalized = normalized.replace(new RegExp(key, 'g'), val); } return normalized.replace(/\s+/g, ' ').trim(); }
     const numberWordsMap = { 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90, 'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000 };
     function wordToNumber(word) { const cleanWord = (word || "").toLowerCase().replace(/[.,()!?;:'"]+$/,'').replace(/^[.,()!?;:'"]+/,''); if (numberWordsMap[cleanWord] !== undefined) return numberWordsMap[cleanWord]; if (!isNaN(parseFloat(cleanWord)) && isFinite(cleanWord)) return parseFloat(cleanWord); return null; }
@@ -519,7 +493,6 @@
         if (localStorage.getItem('hideResultsWelcome') !== 'true') {
             document.getElementById('resultsWelcomeModal').style.display = 'flex';
         }
-        runTutorialStep(tutorialState.currentStep);
     }
     
     function escapeHtml(s=""){ return s.toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -540,12 +513,7 @@
         initializeResultInteractivity();
     }
     
-    function initializeResultInteractivity() { const columns = document.getElementById('comparisonColumns'); if (!columns) return; columns.addEventListener('click', (e) => { if (tutorialState.active && tutorialState.currentStep === 4) { tutorialState.currentStep++; runTutorialStep(tutorialState.currentStep); } const target = e.target.closest('.word-wrapper'); if (!target) return; const wordIndex = target.dataset.index; if (!wordIndex) return; document.querySelectorAll('.active-highlight').forEach(el => el.classList.remove('active-highlight')); const wordsToHighlight = document.querySelectorAll(`.word-wrapper[data-index="${wordIndex}"]`); wordsToHighlight.forEach(word => word.classList.add('active-highlight')); const correspondingWord = Array.from(wordsToHighlight).find(w => w !== target); if (correspondingWord) correspondingWord.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); }
-    const tutorialSteps = [  { group: 'dashboard', element: '#passageList .card:first-child .btn.primary', text: "Welcome! Click 'Take Demo' to begin your first dictation." }, { group: 'player', element: '#speedSelector', text: "Here you can adjust the WPM to practice at your target speed." }, { group: 'player', element: '#startTranscriptionBtn', text: "Once the dictation finishes, click here to start typing in an exam-like environment." }, { group: 'results', element: '#typedCol .word-wrapper', text: "Click on any word in either column to see it automatically matched and highlighted in the other column." }, { group: 'results', element: '.btn.primary', text: "Great job! When you're done, click here to return to the main list. This completes the tour." } ];
-    let tutorialState = { active: false, currentStep: 0 };
-    function initializeTutorial() { if (localStorage.getItem('demoTutorialCompleted')) return; tutorialState.active = true; tutorialState.currentStep = 1; runTutorialStep(tutorialState.currentStep); }
-    function runTutorialStep(stepNumber) { if (!tutorialState.active || stepNumber === 0) return; const currentView = document.querySelector('.view.active'); if(!currentView) return; const viewId = currentView.id; let viewGroup = ''; if (viewId.includes('dashboard')) viewGroup = 'dashboard'; else if (viewId.includes('player')) viewGroup = 'player'; else if (viewId.includes('results')) viewGroup = 'results'; const groupSteps = tutorialSteps.filter(s => s.group === viewGroup); if (groupSteps.length === 0) return; const step = tutorialSteps[stepNumber - 1]; if (!step || step.group !== viewGroup) return; const targetElement = document.querySelector(step.element); if (targetElement) { const overlay = document.getElementById('tourOverlay'); const tooltip = document.getElementById('tourTooltip'); const nextBtn = document.getElementById('tourNextBtn'); const dotsContainer = document.getElementById('tour-dots'); document.getElementById('tourText').textContent = step.text; dotsContainer.innerHTML = ''; groupSteps.forEach(s => { const dot = document.createElement('div'); dot.className = 'dot' + (s.element === step.element ? ' active' : ''); dotsContainer.appendChild(dot); }); targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const rect = targetElement.getBoundingClientRect(); targetElement.style.zIndex = '1001'; overlay.classList.add('visible'); tooltip.classList.add('visible'); let top = rect.bottom + 10, left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2; if (top + tooltip.offsetHeight > window.innerHeight) { top = rect.top - tooltip.offsetHeight - 10; } if (left < 5) left = 5; if (left + tooltip.offsetWidth > window.innerWidth) left = window.innerWidth - tooltip.offsetWidth - 5; tooltip.style.top = `${top}px`; tooltip.style.left = `${left}px`; const isLastStepOverall = stepNumber === tutorialSteps.length; nextBtn.textContent = isLastStepOverall ? 'Finish' : 'Next'; nextBtn.onclick = () => { targetElement.style.zIndex = ''; tutorialState.currentStep++; if (isLastStepOverall || step.group !== (tutorialSteps[stepNumber]?.group || '')) { endTutorial(isLastStepOverall ? false : true); } else { runTutorialStep(tutorialState.currentStep); } }; }, 300); } else { setTimeout(() => runTutorialStep(stepNumber), 500); } }
-    function endTutorial(softEnd = false) { document.getElementById('tourOverlay').classList.remove('visible'); document.getElementById('tourTooltip').classList.remove('visible'); document.querySelectorAll('[style*="z-index: 1001"]').forEach(el => el.style.zIndex = ''); tutorialState.active = softEnd; if (!softEnd) { localStorage.setItem('demoTutorialCompleted', 'true'); tutorialState.currentStep = 0; } }
+    function initializeResultInteractivity() { const columns = document.getElementById('comparisonColumns'); if (!columns) return; columns.addEventListener('click', (e) => { const target = e.target.closest('.word-wrapper'); if (!target) return; const wordIndex = target.dataset.index; if (!wordIndex) return; document.querySelectorAll('.active-highlight').forEach(el => el.classList.remove('active-highlight')); const wordsToHighlight = document.querySelectorAll(`.word-wrapper[data-index="${wordIndex}"]`); wordsToHighlight.forEach(word => word.classList.add('active-highlight')); const correspondingWord = Array.from(wordsToHighlight).find(w => w !== target); if (correspondingWord) correspondingWord.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); }
   </script>
 
   <!-- === ANTI-INSPECTION SCRIPT === -->
