@@ -440,8 +440,8 @@
     .action-buttons .primary-btn { background-color: #374151; max-width: 400px; margin: 10px auto; display: inline-block; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 600; }
     .action-buttons .secondary-btn { background-color: var(--primary-cyan); color: white; }
     
-    /* --- MODALS & TUTORIAL --- */
-    #instructions-modal, .modal-overlay, .tour-overlay {
+    /* --- MODALS --- */
+    #instructions-modal, .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(20, 20, 30, 0.8);
         backdrop-filter: blur(5px);
@@ -450,7 +450,7 @@
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-    .modal-overlay.visible, .tour-overlay.visible, #instructions-modal.visible {
+    .modal-overlay.visible, #instructions-modal.visible {
         display: flex; opacity: 1;
     }
     .modal-content { background-color: var(--surface-color); color: var(--text-color); padding: 30px 40px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid var(--border-subtle); }
@@ -631,23 +631,7 @@
         background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px);
         display: none; justify-content: center; align-items: center; z-index: 9999;
     }
-
-    .tour-tooltip {
-        position: absolute;
-        background: #1f2937; color: white;
-        padding: 15px; border-radius: 8px; z-index: 1001;
-        max-width: 300px; box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        display: none;
-    }
-    .tour-tooltip.visible { display: block; }
-    .tour-tooltip p { margin: 0 0 12px 0; line-height: 1.5; }
-    .tour-tooltip-actions { display: flex; justify-content: space-between; align-items: center; }
-    #tour-dots { display: flex; gap: 4px; }
-    #tour-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: #4b5563; }
-    #tour-dots .dot.active { background: var(--accent-purple); }
-    .tour-tooltip-actions button { background: var(--accent-purple); color: white; padding: 6px 12px; border-radius: 6px; }
-
-
+    
     /* --- PRINT STYLES --- */
     @media print {
       body, .app-container, .result-sheet-container { background: #fff !important; color: #000 !important; box-shadow: none; border: none; }
@@ -752,41 +736,6 @@
         <div class="action-buttons">
             <button id="printReportBtn" class="primary-btn">Download Report</button>
             <button onclick="goHome()" class="primary-btn">🏠 Try Another Dictation</button>
-        </div>
-    </div>
-</div>
-
-<!-- NEW: Onboarding Modal -->
-<div id="onboardingModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 800px;">
-        <div class="pro-modal-header">
-            <h2>Welcome to Kailash Chandra Practice</h2>
-            <p>This tool is designed to help you master stenography with real passages and an SSC-style testing environment.</p>
-        </div>
-        
-        <div class="pro-welcome-grid">
-            <div class="pro-feature-box">
-                <div class="pro-feature-header">
-                    <div class="pro-feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.25 4.25a.75.75 0 011.5 0v1.5c0 .414.336.75.75.75h5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-.75H7.5v.75a.75.75 0 01-1.5 0v-1.5A2.25 2.25 0 018.25 4h3.5a2.25 2.25 0 012.25 2.25v1.5a2.25 2.25 0 01-2.25 2.25h-5A2.25 2.25 0 016 7.75v-1.5a.75.75 0 01-.75-.75v-1.5z" /><path fill-rule="evenodd" d="M8.25 2a.75.75 0 01.75.75v.25a.75.75 0 01-1.5 0V2.75A.75.75 0 018.25 2zm3.5 0a.75.75 0 01.75.75v.25a.75.75 0 01-1.5 0V2.75a.75.75 0 01.75-.75zM10 12.5a1 1 0 100 2 1 1 0 000-2zM4 10a1 1 0 100 2 1 1 0 000-2zm12 0a1 1 0 100 2 1 1 0 000-2zM4.75 15.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
-                    </div>
-                    <h3 class="pro-feature-title">Audio & Transcription</h3>
-                </div>
-                <p>Select any passage to start. Use the audio player to listen to the dictation at your desired speed, then take the transcription test in an interface that simulates the real exam.</p>
-            </div>
-            <div class="pro-feature-box">
-                <div class="pro-feature-header">
-                    <div class="pro-feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 2zM10 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 15zM4.09 5.51a.75.75 0 011.06.02l.875.875a.75.75 0 01-1.06 1.06L4.09 6.57a.75.75 0 010-1.06zM14.49 14.49a.75.75 0 011.06 0l.875.875a.75.75 0 11-1.06 1.06l-.875-.875a.75.75 0 010-1.06zM5.51 15.91a.75.75 0 010-1.06l.875-.875a.75.75 0 011.06 1.06l-.875.875a.75.75 0 01-1.06 0zM15.91 5.51a.75.75 0 010 1.06l-.875.875a.75.75 0 01-1.06-1.06l.875-.875a.75.75 0 011.06 0zM2 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 012 10zm15 0a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 0117 10zM10 6a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd" /></svg>
-                    </div>
-                    <h3 class="pro-feature-title">Detailed Analysis</h3>
-                </div>
-                <p>After submitting, you'll get a detailed result sheet highlighting every mistake. Use the "Re-evaluate Mode" to edit both your text and the original to see how corrections affect your score.</p>
-            </div>
-        </div>
-        <div class="pro-modal-footer">
-            <label><input type="checkbox" id="dontShowOnboardingAgain">Don't show me this again</label>
-            <button id="closeOnboardingBtn" class="modal-close-btn">Let's Start!</button>
         </div>
     </div>
 </div>
@@ -933,16 +882,6 @@
     </div>
 </div>
 
-<!-- Onboarding Tutorial Elements -->
-<div id="tourOverlay" class="tour-overlay"></div>
-<div id="tourTooltip" class="tour-tooltip">
-    <p id="tourText"></p>
-    <div class="tour-tooltip-actions">
-        <div id="tour-dots"></div>
-        <button id="tourNextBtn">Next</button>
-    </div>
-</div>
-
 <script>
   // --- Firebase Configuration ---
   const firebaseConfig = { apiKey: "AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE", authDomain: "checkmysteno.firebaseapp.com", projectId: "checkmysteno", storageBucket: "checkmysteno.appspot.com", messagingSenderId: "719325115943", appId: "1:719325115943:web:0dd50a67978816d42a8002" };
@@ -988,11 +927,6 @@
     document.getElementById('candidate-name-display').textContent = candidateId.toUpperCase();
     attemptsRef = db.collection("testAnalysis").doc(candidateId).collection("attempts");
     
-    // NEW: Show onboarding modal if not completed
-    if (!localStorage.getItem('kcOnboardingCompleted')) {
-        document.getElementById('onboardingModal').classList.add('visible');
-    }
-
     setupAntiInspection();
     setupProgressBar();
     setupExtraControls();
@@ -1004,7 +938,6 @@
     renderGrid();
     
     initializeEventListeners();
-    initializeTutorial();
     renderQuickResume();
   }
   
@@ -1123,12 +1056,9 @@
         return;
     }
     
-    // Also remove the onboarding flag
     localStorage.removeItem(`kcProgress_${candidateId}`);
-    localStorage.removeItem(`kcTutorialCompleted_${candidateId}`);
     localStorage.removeItem(`kcLastAttempt_${candidateId}`);
     localStorage.removeItem('hideResultsWelcome');
-    localStorage.removeItem('kcOnboardingCompleted');
     console.log("Local progress cleared.");
 
     try {
@@ -1217,7 +1147,6 @@
   function goHome() {
       if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
       showView('selection-view');
-      endTutorial(true);
   }
   function clearStateAndGoBack() {
       showView('selection-view');
@@ -1251,8 +1180,6 @@
         const passageData = allPassageData.find(p => p.volId === g_vol && p.tranId === g_tran);
         document.getElementById('player-subtitle').textContent = `Kailash Chandra - Passage ${passageData.transcriptNumber}`;
         loadVideo(audioData.audioUrl, false);
-
-        runTutorialStep(tutorialState.currentStep);
 
     } catch (error) { 
         showErrorModal("Loading Error", "Error: " + error.message);
@@ -1579,7 +1506,6 @@
         };
         renderResultSheet(resultData, originalTextForEval);
         showView('results-view');
-        runTutorialStep(tutorialState.currentStep);
     }
 }
 
@@ -1851,7 +1777,6 @@ function toggleReevaluateMode() {
         if (button) {
             const card = button.closest('.passage-card');
             const { volume, transcript } = card.dataset;
-            if(tutorialState.active && tutorialState.currentStep === 1) tutorialState.currentStep++;
             loadPractice(volume, transcript);
         }
     });
@@ -1878,10 +1803,6 @@ function toggleReevaluateMode() {
         resetProgress();
         resetModal.classList.remove('visible');
     });
-    
-    document.getElementById('startTranscriptionBtn').addEventListener('click', () => {
-       if(tutorialState.active && tutorialState.currentStep === 3) tutorialState.currentStep++;
-    });
 
     // Event listeners for new modals
     const welcomeModal = document.getElementById('resultsWelcomeModal');
@@ -1900,15 +1821,6 @@ function toggleReevaluateMode() {
     document.getElementById('errorTypeSelect').addEventListener('change', validateReportForm);
     document.getElementById('otherErrorText').addEventListener('input', validateReportForm);
     
-    // NEW: Onboarding Modal Listeners
-    const onboardingModal = document.getElementById('onboardingModal');
-    document.getElementById('closeOnboardingBtn').addEventListener('click', () => {
-        if (document.getElementById('dontShowOnboardingAgain').checked) {
-            localStorage.setItem('kcOnboardingCompleted', 'true');
-        }
-        onboardingModal.classList.remove('visible');
-    });
-
     // Refresh/Close page warning
     window.addEventListener('beforeunload', function (e) {
         if (document.getElementById('results-view').style.display === 'block') {
@@ -1918,121 +1830,6 @@ function toggleReevaluateMode() {
         }
     });
   }
-  
-  // --- TUTORIAL LOGIC ---
-  const tutorialSteps = [
-    { group: 'selection', element: '#passage-1-1 .take-test-btn', text: "Welcome! Click 'Take Test' on any passage to begin your first dictation." },
-    { group: 'player', element: '#wpmSpeed', text: "Here you can adjust the WPM to practice at your target speed. Use '+' and '-' for fine-tuning." },
-    { group: 'player', element: '#startTranscriptionBtn', text: "Once the dictation finishes, click here to start typing in an exam-like environment." },
-    { group: 'results', element: '#typedCol .highlight', text: "Click on any highlighted word in either column to see it automatically matched and scrolled to in the other column." },
-    { group: 'results', element: '.action-buttons .primary-btn', text: "Great job! When you're done, click here to return to the main list and try another passage. This completes the tour." },
-  ];
-  
-  let tutorialState = {
-      active: false,
-      currentStep: 0,
-  };
-
-  function initializeTutorial() {
-    if (!candidateId || localStorage.getItem(`kcTutorialCompleted_${candidateId}`)) {
-        return;
-    }
-    tutorialState.active = true;
-    tutorialState.currentStep = 1;
-    runTutorialStep(tutorialState.currentStep);
-  }
-  
-  function getStepsForGroup(groupName) {
-      return tutorialSteps.filter(step => step.group === groupName);
-  }
-
-  function runTutorialStep(stepNumber) {
-    if (!tutorialState.active || stepNumber === 0) return;
-    
-    const currentViewId = document.querySelector('.view[style*="display: block"]').id;
-    let viewGroup = '';
-    if (currentViewId === 'selection-view') viewGroup = 'selection';
-    else if (currentViewId === 'player-view') viewGroup = 'player';
-    else if (currentViewId === 'results-view') viewGroup = 'results';
-    
-    const groupSteps = getStepsForGroup(viewGroup);
-    if(groupSteps.length === 0) return;
-    
-    const step = tutorialSteps[stepNumber - 1];
-    if(!step || step.group !== viewGroup) return;
-
-    const targetElement = document.querySelector(step.element);
-    if (targetElement) {
-        const overlay = document.getElementById('tourOverlay');
-        const tooltip = document.getElementById('tourTooltip');
-        const text = document.getElementById('tourText');
-        const nextBtn = document.getElementById('tourNextBtn');
-        const dotsContainer = document.getElementById('tour-dots');
-
-        text.textContent = step.text;
-
-        dotsContainer.innerHTML = '';
-        groupSteps.forEach((s) => {
-           const dot = document.createElement('div');
-           dot.className = 'dot' + (s.element === step.element ? ' active' : '');
-           dotsContainer.appendChild(dot);
-        });
-
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        setTimeout(() => {
-            const rect = targetElement.getBoundingClientRect();
-            targetElement.style.zIndex = '1001';
-            overlay.classList.add('visible');
-            tooltip.classList.add('visible');
-
-            let top = rect.bottom + 10;
-            let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
-            if (top + tooltip.offsetHeight > window.innerHeight) { top = rect.top - tooltip.offsetHeight - 10; }
-            if (left < 0) left = 5;
-            if (left + tooltip.offsetWidth > window.innerWidth) left = window.innerWidth - tooltip.offsetWidth - 5;
-            
-            tooltip.style.top = `${top}px`;
-            tooltip.style.left = `${left}px`;
-            
-            const isLastStepOverall = stepNumber === tutorialSteps.length;
-            nextBtn.textContent = isLastStepOverall ? 'Finish' : 'Next';
-
-            nextBtn.onclick = () => {
-                targetElement.style.zIndex = '';
-                tutorialState.currentStep++;
-                if (isLastStepOverall || step.group !== tutorialSteps[stepNumber]?.group) {
-                    endTutorial(isLastStepOverall ? false : true);
-                } else {
-                    runTutorialStep(tutorialState.currentStep);
-                }
-            };
-        }, 300);
-    } else {
-        setTimeout(() => {
-            if(document.querySelector(step.element)) {
-                runTutorialStep(stepNumber);
-            } else {
-                 console.warn("Tutorial element not found, skipping step:", step.element);
-                 tutorialState.currentStep++;
-            }
-        }, 500);
-    }
-  }
-
-  function endTutorial(softEnd = false) {
-      document.getElementById('tourOverlay').classList.remove('visible');
-      document.getElementById('tourTooltip').classList.remove('visible');
-      document.querySelectorAll('[style*="z-index: 1001"]').forEach(el => el.style.zIndex = '');
-      
-      tutorialState.active = softEnd;
-      
-      if (!softEnd && candidateId) {
-          localStorage.setItem(`kcTutorialCompleted_${candidateId}`, 'true');
-          tutorialState.active = false;
-          tutorialState.currentStep = 0;
-      }
- }
  
  function showErrorModal(title, message) {
     document.getElementById('error-title').textContent = title;
