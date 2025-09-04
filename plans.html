@@ -1,86 +1,765 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Premium Resumes Soon</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Poppins", sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
-      text-align: center;
-      color: #333;
-    }
-    .container {
-      background: #ffffffee;
-      padding: 40px;
-      border-radius: 25px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      max-width: 450px;
-      width: 90%;
-      animation: fadeIn 1.5s ease-in-out;
-    }
-    h1 {
-      font-size: 1.8em;
-      color: #2f855a;
-      margin-bottom: 20px;
-    }
-    #timer {
-      font-size: 2em;
-      font-weight: bold;
-      color: #22543d;
-      margin-top: 10px;
-      letter-spacing: 2px;
-    }
-    .emoji {
-      font-size: 2.5em;
-      margin-bottom: 15px;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0; transform: scale(0.9);}
-      to {opacity: 1; transform: scale(1);} 
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Plans - Check My Steno</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"/>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.9.0/firebase-firestore-compat.js"></script>
+    <!-- QR Code Generation Library -->
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-bg: #0B1120;
+            --card-bg: #1A2035;
+            --text-color: #f1f5f9;
+            --secondary-text-color: #94a3b8;
+            --border-color: #334155;
+            --accent-gold: #f59e0b;
+            --accent-silver: #22d3ee;
+            --accent-bronze: #d946ef;
+            --youtube-red: #ff0000;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+        body, html { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-color); }
+        .page-container { max-width: 1100px; margin: 0 auto; padding: 4rem 2rem; }
+        .hidden { display: none !important; }
+
+        .header-section { text-align: center; margin-bottom: 5rem; }
+        .header-section h1 { font-size: 3.5rem; font-weight: 900; margin-bottom: 1rem; letter-spacing: -0.05em; line-height: 1.2; }
+        .header-section .highlight { background: linear-gradient(90deg, var(--accent-silver), var(--accent-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-section p { font-size: 1.25rem; color: var(--secondary-text-color); max-width: 700px; margin: 0 auto; }
+        .features-section { margin-bottom: 5rem; }
+        .features-section h2 { text-align: center; font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; }
+        .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .feature-item { background-color: var(--card-bg); padding: 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 1.5rem; border: 1px solid var(--border-color); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .feature-icon-wrapper { flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .feature-icon-wrapper i { font-size: 1.5rem; color: white; }
+        .feature-item .feature-text h3 { margin: 0 0 0.25rem 0; font-size: 1.1rem; font-weight: 600; }
+        .feature-item .feature-text p { margin: 0; color: var(--secondary-text-color); font-size: 0.95rem; }
+        .feature-item[data-color="youtube"] .feature-icon-wrapper { background-color: var(--youtube-red); }
+        .feature-item[data-color="youtube"]:hover { border-color: var(--youtube-red); box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="speed"] .feature-icon-wrapper { background-color: #3b82f6; }
+        .feature-item[data-color="speed"]:hover { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="checker"] .feature-icon-wrapper { background-color: #16a34a; }
+        .feature-item[data-color="checker"]:hover { border-color: #16a34a; box-shadow: 0 0 20px rgba(22, 163, 74, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="analysis"] .feature-icon-wrapper { background-color: #8b5cf6; }
+        .feature-item[data-color="analysis"]:hover { border-color: #8b5cf6; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="evaluation"] .feature-icon-wrapper { background-color: var(--accent-bronze); }
+        .feature-item[data-color="evaluation"]:hover { border-color: var(--accent-bronze); box-shadow: 0 0 20px rgba(217, 70, 239, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="chain"] .feature-icon-wrapper { background-color: #ec4899; }
+        .feature-item[data-color="chain"]:hover { border-color: #ec4899; box-shadow: 0 0 20px rgba(236, 72, 153, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="book"] .feature-icon-wrapper { background-color: var(--accent-gold); }
+        .feature-item[data-color="book"]:hover { border-color: var(--accent-gold); box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); transform: translateY(-5px); }
+        .feature-item[data-color="reports"] .feature-icon-wrapper { background-color: var(--accent-silver); }
+        .feature-item[data-color="reports"]:hover { border-color: var(--accent-silver); box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); transform: translateY(-5px); }
+        .pricing-section { text-align: center; }
+        
+        #offer-banner {
+            background: linear-gradient(45deg, rgba(245, 158, 11, 0.1), rgba(34, 211, 238, 0.1));
+            border: 1px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 4rem;
+            text-align: center;
+        }
+        #offer-banner h2 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; color: var(--accent-gold); }
+        #offer-banner p { color: var(--secondary-text-color); margin: 0 0 1.5rem 0; font-size: 1.1rem; }
+        .offer-code-box { display: inline-flex; align-items: center; gap: 1rem; background-color: var(--primary-bg); border: 2px dashed var(--border-color); padding: 0.8rem 1.5rem; border-radius: 12px; cursor: pointer; transition: border-color 0.3s ease; }
+        .offer-code-box:hover { border-color: var(--accent-gold); }
+        .offer-code-box span { font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; color: var(--text-color); }
+        .offer-code-box i { font-size: 1.2rem; color: var(--secondary-text-color); }
+
+        .plans-wrapper { display: flex; justify-content: center; align-items: flex-start; gap: 2rem; flex-wrap: wrap; }
+        .plan-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem; width: 320px; text-align: center; transition: transform 0.3s ease, box-shadow 0.3s ease; position: relative; display: flex; flex-direction: column; }
+        .plan-card:hover { transform: translateY(-10px); }
+        .plan-card h3 { font-size: 2rem; font-weight: 700; margin: 0 0 0.5rem 0; }
+        .plan-card .duration { font-size: 1rem; color: var(--secondary-text-color); margin-bottom: 1.5rem; font-weight: 500; }
+        .plan-card .price { font-size: 3.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .plan-card .old-price { color: var(--secondary-text-color); text-decoration: line-through; margin-bottom: 1.5rem; height: 1.2em; }
+        
+        .plan-features { list-style-type: none; padding: 0; margin: 1.5rem 0; text-align: left; flex-grow: 1; }
+        .plan-features li { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.8rem; font-size: 0.95rem; }
+        .plan-features li i { color: var(--success-color); }
+
+        .plan-card .cta-button { display: block; width: 100%; padding: 1rem; border-radius: 8px; border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; color: var(--text-color); margin-top: auto; }
+        .plan-card .cta-button:hover { transform: scale(1.05); }
+        .plan-card.bronze { border-top: 4px solid var(--accent-bronze); }
+        .plan-card.bronze .cta-button { background: var(--accent-bronze); }
+        .plan-card.silver { border: 2px solid var(--accent-silver); transform: scale(1.05); box-shadow: 0 0 30px rgba(34, 211, 238, 0.2); }
+        .plan-card.silver:hover { transform: scale(1.1) translateY(-10px); }
+        .plan-card.silver .cta-button { background: var(--accent-silver); color: var(--primary-bg); }
+        .plan-card.gold { border-top: 4px solid var(--accent-gold); }
+        .plan-card.gold .cta-button { background: var(--accent-gold); color: var(--primary-bg); }
+        .popular-badge { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(90deg, var(--accent-silver), #5eead4); color: var(--primary-bg); padding: 0.5rem 1.5rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem; }
+        .back-button-container { text-align: center; margin-top: 4rem; }
+        .back-button { color: var(--secondary-text-color); text-decoration: none; font-weight: 600; }
+        .status-container { text-align: center; padding: 4rem 1rem; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; max-width: 700px; margin: 5rem auto; }
+        .spinner { border: 5px solid var(--border-color); border-top: 5px solid var(--accent-silver); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 2rem auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status-details { background-color: var(--primary-bg); padding: 1.5rem; border-radius: 8px; margin-top: 2rem; text-align: left; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; } .detail-row span { color: var(--secondary-text-color); } .detail-row strong { color: var(--text-color); }
+        
+        .verification-notice {
+            background-color: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--accent-gold);
+            padding: 1rem;
+            text-align: left;
+            border-radius: 4px;
+            margin: 2rem 0;
+            color: var(--secondary-text-color);
+        }
+        .verification-notice strong { color: var(--accent-gold); }
+
+        .cancel-button { background: none; border: none; color: var(--secondary-text-color); text-decoration: underline; cursor: pointer; font-size: 0.9rem; margin-top: 2rem; font-family: 'Inter', sans-serif; }
+        .cancel-button:hover { color: var(--error-color); }
+        .status-icon { font-size: 5rem; margin-bottom: 1.5rem; }
+        .success-icon { color: var(--success-color); }
+        .rejected-icon { color: var(--error-color); }
+        .status-container h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .status-container p { color: var(--secondary-text-color); max-width: 450px; margin: 0 auto 2rem auto; }
+        #access-code-reveal { background: var(--primary-bg); border: 2px dashed var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem auto; cursor: pointer; transition: border-color 0.3s ease; max-width: 300px; }
+        #access-code-reveal:hover { border-color: var(--success-color); }
+        #access-code-display { font-size: 2rem; font-weight: 700; letter-spacing: 4px; color: var(--success-color); }
+        #plan-validity { margin-top: -1rem; margin-bottom: 2rem; font-size: 0.9rem; color: var(--secondary-text-color); }
+        .action-button { display: inline-block; padding: 1rem 2rem; border-radius: 8px; text-decoration: none; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .action-button:hover { transform: scale(1.05); }
+        .login-button { background: var(--accent-silver); color: var(--primary-bg); }
+        .try-again-button { background: var(--accent-gold); color: var(--primary-bg); }
+        #rejection-reason-box { background-color: var(--primary-bg); border-left: 4px solid var(--error-color); padding: 1rem; text-align: left; max-width: 450px; margin: 2rem auto; border-radius: 4px; }
+        #rejection-reason-box p { margin:0; color: var(--text-color); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 17, 32, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content { background: linear-gradient(145deg, #1A2035, #0B1120); border-radius: 20px; width: 100%; max-width: 480px; border: 1px solid var(--border-color); position: relative; max-height: 95vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.4); transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-header { padding: 1rem 1.5rem; text-align: center; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-header .brand { font-weight: 700; color: var(--secondary-text-color); }
+        .modal-header .close-button { font-size: 2rem; color: var(--secondary-text-color); background: none; border: none; cursor: pointer; }
+        .modal-stepper { display: flex; justify-content: center; gap: 0.5rem; }
+        .step { color: var(--secondary-text-color); font-weight: 600; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 20px; transition: all 0.3s ease; }
+        .step.active { color: var(--primary-bg); background-color: var(--accent-silver); }
+        .modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
+        .step-content { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .step-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .order-summary-card { background-color: var(--primary-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; }
+        .summary-row:not(:last-child) { margin-bottom: 1rem; }
+        .summary-row.total { font-size: 1.5rem; font-weight: 800; color: var(--text-color); padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 1rem; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2); flex-shrink: 0; }
+        .modal-button { display: block; width: 100%; padding: 1rem; border-radius: 8px; border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer; background: var(--accent-silver); color: var(--primary-bg); transition: all 0.2s ease; }
+        .modal-button:hover:not(:disabled) { transform: scale(1.02); }
+        .modal-button:disabled { background-color: var(--border-color); color: var(--secondary-text-color); cursor: not-allowed; }
+        .payment-options { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        .payment-option { background: var(--primary-bg); border: 2px solid var(--border-color); padding: 1.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; }
+        .payment-option:hover { border-color: var(--accent-silver); transform: translateY(-5px); }
+        .payment-option.selected { border-color: var(--accent-silver); box-shadow: 0 0 20px rgba(34, 211, 238, 0.2); }
+        .payment-option-header { display: flex; align-items: center; gap: 1rem; font-size: 1.2rem; font-weight: 600; }
+        .payment-option-details { margin-top: 1.5rem; display: none; animation: fadeIn 0.5s; }
+        .instruction-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+        .tooltip-container { position: relative; display: inline-block; z-index: 5; }
+        .tooltip-icon { cursor: pointer; background-color: var(--border-color); color: var(--text-color); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; }
+        .tooltip-text { visibility: hidden; width: 250px; background-color: #0B1120; color: #fff; text-align: left; border-radius: 6px; padding: 10px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -125px; opacity: 0; transition: opacity 0.3s; border: 1px solid var(--border-color); font-size: 0.9rem; font-weight: 400; }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .unique-code-container { display: flex; align-items: center; gap: 1rem; background-color: #0B1120; padding: 0.5rem 1rem; border-radius: 8px; border: 2px dashed var(--accent-gold); }
+        .unique-code-text { flex-grow: 1; font-size: 1.3rem; letter-spacing: 2px; color: var(--accent-gold); text-align: center; }
+        .copy-button { background: none; border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 0.5rem 0.8rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; }
+        .copy-button:hover { background: var(--accent-gold); color: var(--primary-bg); }
+        .upi-visual-aid { background: #1e293b; border-radius: 12px; padding: 1rem; margin-top: 1rem; }
+        .upi-visual-aid p { margin: 0 0 0.5rem 0; font-size: 0.8rem; text-align: left; }
+        .notes-field { background: var(--primary-bg); border-radius: 6px; padding: 0.8rem; text-align: left; color: var(--secondary-text-color); }
+        .notes-field span { color: var(--accent-silver); font-weight: 600; }
+        .upi-id { background-color: var(--primary-bg); padding: 0.8rem 1rem; border-radius: 8px; font-weight: 600; word-wrap: break-word; text-align: center; }
+        #qr-code-area { display: flex; gap: 1.5rem; align-items: center; justify-content: center; }
+        #qr-code-container { width: 150px; height: 150px; background: #fff; border-radius: 8px; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
+        .qr-instructions { flex-grow: 1; text-align: left; }
+        .qr-instructions b.important { color: var(--accent-gold); }
+        .qr-instructions small { color: var(--secondary-text-color); font-size: 0.9em; }
+
+        .contact-footer, .status-contact-footer { text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        .contact-footer a, .contact-footer span, .status-contact-footer a { color: var(--secondary-text-color); text-decoration: none; margin: 0 0.75rem; font-size: 0.9rem; transition: color 0.2s ease; }
+        .contact-footer a:hover, .contact-footer span:hover, .status-contact-footer a:hover { color: var(--accent-silver); }
+        .contact-footer span { cursor: pointer; }
+        
+        .verification-form input { width: 100%; background-color: var(--primary-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.8rem; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 1rem; }
+        .back-to-payment { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; text-align: center; display: block; width: 100%; margin-top: 1rem; }
+        #form-message { margin-top: 1rem; font-weight: 500; }
+        .error-message { color: var(--error-color); }
+        #termsModal .modal-body { text-align: left; color: var(--secondary-text-color); }
+        #termsModal h3 { color: var(--text-color); }
+        #termsModal li { margin-bottom: 1rem; }
+        .coupon-area { margin-top: 1.5rem; }
+        .coupon-input-group { display: flex; gap: 0.5rem; }
+        .coupon-input-group input { flex-grow: 1; background-color: var(--primary-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.8rem; border-radius: 8px; font-size: 1rem; }
+        .coupon-input-group button { background-color: var(--accent-gold); color: var(--primary-bg); border: none; padding: 0.8rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .coupon-input-group button:disabled { background-color: var(--border-color); cursor: not-allowed; }
+        #coupon-message { font-size: 0.9rem; font-weight: 500; margin-top: 0.75rem; min-height: 1.2rem; }
+        #coupon-message small { color: var(--secondary-text-color); }
+        .coupon-message-success { color: var(--success-color); }
+        .coupon-message-error { color: var(--error-color); }
+        .summary-row-discount { color: var(--success-color); }
+
+        @media (max-width: 992px) { .plans-wrapper { flex-direction: column; align-items: center; } }
+        @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } #qr-code-area { flex-direction: column; text-align: center; } .qr-instructions { margin-top: 1rem; } }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="emoji">🍀🕘🌈</div>
-    <h1>Premium Subscription will be resumed<br>Tomorrow at 9:00 AM</h1>
-    <div id="timer">Loading...</div>
-    <p style="color:#555; margin-top:15px;">Thank you for your patience! ☀️</p>
-  </div>
 
-  <script>
-    // Set target to tomorrow 9 AM
-    const now = new Date();
-    const target = new Date();
-    target.setDate(now.getDate() + 1);
-    target.setHours(9, 0, 0, 0);
+    <div id="status-area" class="page-container hidden">
+        <div class="status-container">
+            <div id="pending-section">
+                <div class="spinner"></div>
+                <h1>Verification in Progress</h1>
+                <p>Your submission is being verified. This page will update automatically once approved.</p>
+                <div class="verification-notice">
+                    <strong>Please Note:</strong> This is a semi-automated process to ensure security. Activation can take anywhere from <strong>1 minute to 1 hour</strong>. Thank you for your patience!
+                </div>
+                <div class="status-details">
+                    <div class="detail-row"><span>Submitted Email:</span><strong id="pending-email"></strong></div>
+                    <div class="detail-row"><span>Unique Code:</span><strong id="pending-code"></strong></div>
+                </div>
+                
+                <!-- NEW: CONTACT SECTION FOR PENDING PAGE -->
+                <div class="status-contact-footer">
+                    <p style="margin-bottom: 1rem; color: var(--secondary-text-color);">Have a question about your payment? Contact us:</p>
+                    <a href="mailto:checkmysteno@gmail.com"><i class="fa-solid fa-envelope"></i> Email</a>
+                    <a href="https://t.me/CheckMySteno" target="_blank"><i class="fa-brands fa-telegram"></i> Telegram</a>
+                </div>
+                
+                <button class="cancel-button" onclick="cancelVerification()">Cancel and start over</button>
+            </div>
+            <div id="success-section" class="hidden">
+                <div class="status-icon success-icon"><i class="fas fa-check-circle"></i></div>
+                <h1>Your Access is Ready!</h1>
+                <p>Click the code below to copy it, then use it on the login page.</p>
+                <div id="access-code-reveal" title="Click to copy"><div id="access-code-display"></div></div>
+                <p id="plan-validity"></p>
+                <a href="index.html" class="action-button login-button">Go to Login Page</a>
+            </div>
+            <div id="rejected-section" class="hidden">
+                <div class="status-icon rejected-icon"><i class="fas fa-times-circle"></i></div>
+                <h1>Verification Failed</h1>
+                <p>Unfortunately, we couldn't verify your payment. Please see the reason below and try again.</p>
+                <div id="rejection-reason-box">
+                    <p><strong>Reason:</strong> <span id="rejection-reason-text"></span></p>
+                </div>
+                <button class="action-button try-again-button" onclick="startOver()">Try Again</button>
+            </div>
+        </div>
+    </div>
 
-    function updateTimer() {
-      const current = new Date().getTime();
-      const distance = target - current;
-      if (distance < 0) {
-        document.getElementById("timer").innerHTML = "Premium is now LIVE! ✨";
-        return;
-      }
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      document.getElementById("timer").innerHTML =
-        (hours < 10 ? "0" + hours : hours) + ":" +
-        (minutes < 10 ? "0" + minutes : minutes) + ":" +
-        (seconds < 10 ? "0" + seconds : seconds);
-    }
-    updateTimer();
-    setInterval(updateTimer, 1000);
-  </script>
+    <div id="main-content" class="page-container">
+        <div class="header-section">
+             <h1>Unlock <span class="highlight">Every Powerful Feature.</span><br>Choose Your Access Pass.</h1>
+            <p>All plans grant 100% access to the most advanced stenography toolkit. No holding back. Just pure practice and flawless analysis.</p>
+        </div>
+        <div class="features-section">
+            <h2>The Ultimate Steno Toolkit: Everything Included</h2>
+            <div class="features-grid">
+                 <div class="feature-item" data-color="youtube"><div class="feature-icon-wrapper"><i class="fa-brands fa-youtube"></i></div><div class="feature-text"><h3>YouTube Dictation Mastery</h3><p>Our flagship feature. Practice with any YouTube video and get instant, perfect feedback.</p></div></div>
+                <div class="feature-item" data-color="speed"><div class="feature-icon-wrapper"><i class="fa-solid fa-gauge-high"></i></div><div class="feature-text"><h3>Precision Speed Control</h3><p>Dictate your terms. Set the playback speed from a steady 60 to a challenging 160 WPM.</p></div></div>
+                <div class="feature-item" data-color="checker"><div class="feature-icon-wrapper"><i class="fa-solid fa-file-circle-check"></i></div><div class="feature-text"><h3>Smart Transcription Checker</h3><p>Paste any dictation text and your transcript for an immediate, accurate evaluation.</p></div></div>
+                <div class="feature-item" data-color="analysis"><div class="feature-icon-wrapper"><i class="fa-solid fa-magnifying-glass-chart"></i></div><div class="feature-text"><h3>Deep Mistake Analysis</h3><p>Instantly see where you went wrong with a full breakdown of Omissions & Substitutions.</p></div></div>
+                <div class="feature-item" data-color="evaluation"><div class="feature-icon-wrapper"><i class="fa-solid fa-scale-balanced"></i></div><div class="feature-text"><h3>SSC-Level Evaluation</h3><p>Simulate official exam criteria with our smart logic for Half Mistakes and punctuation.</p></div></div>
+                <div class="feature-item" data-color="chain"><div class="feature-icon-wrapper"><i class="fa-solid fa-link-slash"></i></div><div class="feature-text"><h3>Flawless Chain Error Logic</h3><p>Our dynamic alignment prevents one slip-up from causing a cascade of incorrect checks.</p></div></div>
+                <div class="feature-item" data-color="book"><div class="feature-icon-wrapper"><i class="fa-solid fa-book-open"></i></div><div class="feature-text"><h3>Complete KC Volume Library</h3><p>Get full, pre-loaded access to all 24 Kailash Chandra volumes, perfectly organized.</p></div></div>
+                <div class="feature-item" data-color="reports"><div class="feature-icon-wrapper"><i class="fa-solid fa-chart-pie"></i></div><div class="feature-text"><h3>Actionable Progress Reports</h3><p>Track your journey to mastery with detailed reports on accuracy, mistake types, and stats.</p></div></div>
+            </div>
+        </div>
+
+        <div class="pricing-section">
+            <div id="offer-banner" class="hidden">
+                <h2 id="offer-title">Launch Special!</h2>
+                <p id="offer-description">Use the limited-time code below to get an exclusive discount on any plan.</p>
+                <div class="offer-code-box" onclick="copyOfferCode('', this)" title="Click to copy code">
+                    <span id="offer-code-display">LOADING...</span>
+                    <i class="fa-regular fa-copy"></i>
+                </div>
+            </div>
+
+            <h2>Choose Your Pass</h2>
+            <div class="plans-wrapper">
+                <div class="plan-card bronze">
+                    <h3>🥉 Bronze Pass</h3><p class="duration">1 Month Access</p><div class="price">₹299</div><p class="old-price">&nbsp;</p>
+                    <ul class="plan-features">
+                        <li><i class="fa-solid fa-check"></i> All Premium Features</li>
+                        <li><i class="fa-solid fa-check"></i> Full KC Library Access</li>
+                        <li><i class="fa-solid fa-check"></i> Perfect for a Trial Run</li>
+                    </ul>
+                    <button class="cta-button" onclick="showPaymentModal('Bronze Pass', 299)">Get Started</button>
+                </div>
+                <div class="plan-card silver">
+                    <div class="popular-badge">Best Value</div><h3>🥈 Silver Pass</h3><p class="duration">3 Months Access</p><div class="price">₹499</div><p class="old-price">Save 44% (vs. Monthly)</p>
+                     <ul class="plan-features">
+                        <li><i class="fa-solid fa-check"></i> All Premium Features</li>
+                        <li><i class="fa-solid fa-check"></i> Full KC Library Access</li>
+                        <li><i class="fa-solid fa-check"></i> Ideal for Exam Preparation</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Huge Savings!</strong></li>
+                    </ul>
+                    <button class="cta-button" onclick="showPaymentModal('Silver Pass', 499)">Get Started</button>
+                </div>
+                <div class="plan-card gold">
+                    <h3>🥇 Gold Pass</h3><p class="duration">1 Year Access</p><div class="price">₹999</div><p class="old-price">Save 72% (vs. Monthly)</p>
+                     <ul class="plan-features">
+                        <li><i class="fa-solid fa-check"></i> All Premium Features</li>
+                        <li><i class="fa-solid fa-check"></i> Full KC Library Access</li>
+                        <li><i class="fa-solid fa-check"></i> For Serious Long-Term Skill</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Maximum Value Guaranteed</strong></li>
+                    </ul>
+                    <button class="cta-button" onclick="showPaymentModal('Gold Pass', 999)">Get Started</button>
+                </div>
+            </div>
+        </div>
+        <div class="back-button-container">
+            <a href="index.html" class="back-button">← Back to Home</a>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content">
+             <div class="modal-header">
+                <span class="brand">Check My Steno</span>
+                <div class="modal-stepper">
+                    <div id="step-indicator-1" class="step active">1. Order</div>
+                    <div id="step-indicator-2" class="step">2. Payment</div>
+                    <div id="step-indicator-3" class="step">3. Verify</div>
+                </div>
+                <button class="close-button" onclick="hidePaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="step-1-order" class="step-content active">
+                    <h3>Confirm Your Order</h3>
+                    <div class="order-summary-card">
+                        <div class="summary-row"><span>Plan Selected:</span><strong id="summary-plan-name"></strong></div>
+                        <div class="summary-row hidden" id="discount-row">
+                            <span class="summary-row-discount">Discount:</span>
+                            <strong class="summary-row-discount" id="summary-discount-amount"></strong>
+                        </div>
+                        <div class="summary-row total"><span>Total Amount:</span><strong id="summary-total-price"></strong></div>
+                    </div>
+                    <div class="coupon-area">
+                        <div class="coupon-input-group">
+                            <input type="text" id="coupon-code-input" placeholder="Have a discount code?">
+                            <button id="apply-coupon-btn" onclick="applyCoupon()">Apply</button>
+                        </div>
+                        <p id="coupon-message"></p>
+                    </div>
+                </div>
+                <div id="step-2-payment" class="step-content">
+                    <div class="instruction-header">
+                        <h3>Important: How to Link Your Payment</h3>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Because we don't use an automatic gateway, this code is the only way to link your payment to your order. It ensures you get your access pass quickly!</span>
+                        </div>
+                    </div>
+                    <p style="margin-top:0;">Please follow the steps for your chosen payment method.</p>
+                    <div class="payment-options">
+                        <div class="payment-option" id="upi-option">
+                            <div class="payment-option-header"><i class="fa-solid fa-at"></i> Pay with UPI ID</div>
+                            <div class="payment-option-details">
+                                <p style="margin-top:0.5rem"><b>Step 1:</b> Pay to the UPI ID below.</p>
+                                <div class="upi-id" id="upi-id-display"></div>
+                                <p style="margin-top: 1.5rem;"><b>Step 2:</b> Copy your unique code and paste it into your UPI app's "Add a note" or "Remarks" section before paying.</p>
+                                <div class="unique-code-container">
+                                    <span class="unique-code-text" id="unique-code-display-upi"></span>
+                                    <button class="copy-button" onclick="copyUniqueCode('unique-code-display-upi', this)">Copy</button>
+                                </div>
+                                <div class="upi-visual-aid">
+                                    <p>Look for this in your UPI app:</p>
+                                    <div class="notes-field">Add a note (Optional): <span>PASTE-CODE-HERE</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-option" id="qr-option">
+                            <div class="payment-option-header"><i class="fa-solid fa-qrcode"></i> Pay with QR Code</div>
+                            <div class="payment-option-details">
+                                <div id="qr-code-area">
+                                    <div id="qr-code-container"></div>
+                                    <div class="qr-instructions">
+                                        <p><b>Step 1:</b> Scan the QR Code.</p>
+                                        <p style="margin-top: 1.5rem;"><b>Step 2:</b> Find the "Add a note" or "Remarks" field and paste your unique code below. <small>(This is optional but ensures faster verification).</small></p>
+                                        <div class="unique-code-container">
+                                            <span class="unique-code-text" id="unique-code-display-qr"></span>
+                                            <button class="copy-button" onclick="copyUniqueCode('unique-code-display-qr', this)">Copy</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="step-3-verify" class="step-content">
+                    <h3>Verify Your Payment</h3>
+                    <p>Enter your details and the Transaction ID from your UPI app to complete the process.</p>
+                    <form id="verifyForm" onsubmit="submitVerification(event)" class="verification-form">
+                        <input type="text" id="userName" placeholder="Your Name" required>
+                        <input type="email" id="userEmail" placeholder="Your Email" required>
+                        <input type="text" id="transactionId" placeholder="UPI Transaction ID (Ref No.)" required>
+                        <input type="hidden" id="planNameInput"><input type="hidden" id="planPriceInput"><input type="hidden" id="uniqueCodeInput">
+                        <p id="form-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-action-button" class="modal-button" onclick="navigateToStep(2)">Proceed to Payment</button>
+                <button class="back-to-payment hidden" id="back-button" onclick="navigateToStep(2)">Back to Payment Options</button>
+                <div class="contact-footer">
+                    <span onclick="showTermsModal()">Terms & Conditions</span>
+                    <a href="mailto:checkmysteno@gmail.com"><i class="fa-solid fa-envelope"></i> Email</a>
+                    <a href="https://t.me/CheckMySteno" target="_blank"><i class="fa-brands fa-telegram"></i> Telegram</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TERMS & CONDITIONS MODAL -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="brand">Terms & Conditions</span>
+                <button class="close-button" onclick="hideTermsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>1. General Use</h3><ul><li>The access pass is for single-user use only. Sharing your access code is prohibited and may result in the termination of your account without a refund.</li></ul>
+                <h3>2. Payments and Refunds</h3><ul><li>All payments are processed manually. Access is granted only after successful verification of the payment details you provide.</li><li>Due to the digital nature of the service, all sales are final. We do not offer refunds once an access pass has been activated. Please be sure of your purchase.</li></ul>
+                 <h3>3. Service Availability</h3><ul><li>We strive for 100% uptime, but we do not guarantee that the service will be available at all times. Maintenance and unforeseen outages may occur.</li></ul>
+                 <h3>4. User Conduct</h3><ul><li>You agree not to misuse the service, attempt to reverse engineer any part of the application, or use it for any illegal purposes.</li></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Your Firebase Config ---
+        const FBCONFIG = {apiKey:"AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE",authDomain:"checkmysteno.firebaseapp.com",projectId:"checkmysteno",storageBucket:"checkmysteno.firebasestorage.app",messagingSenderId:"719325115943",appId:"1:7193-d42a8002"};
+        firebase.initializeApp(FBCONFIG);
+        const DB = firebase.firestore();
+
+        // --- GLOBAL CONFIGURATION ---
+        const UPI_ID = "neha394@ybl";
+        const STORAGE_KEY = 'stenoVerificationTicket';
+        let statusCheckInterval = null;
+        
+        const paymentModal = document.getElementById('paymentModal');
+        const termsModal = document.getElementById('termsModal');
+        let currentStep = 1;
+        let originalPrice = 0;
+        let finalPrice = 0;
+        let qrCodeInstance = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('upi-id-display').innerText = UPI_ID;
+            
+            fetchAndDisplayOffer();
+
+            const ticketData = localStorage.getItem(STORAGE_KEY);
+            if (ticketData) {
+                const ticket = JSON.parse(ticketData);
+                showStatusArea(ticket);
+            } else {
+                showMainContent();
+            }
+        });
+
+        async function fetchAndDisplayOffer() {
+            const offerBanner = document.getElementById('offer-banner');
+            try {
+                // This direct lookup works with your security rules and avoids permission errors.
+                // It fetches a specific document from the 'siteConfig' collection.
+                const configRef = DB.collection('siteConfig').doc('config');
+                const configDoc = await configRef.get();
+
+                if (configDoc.exists) {
+                    const featuredCodeName = configDoc.data().featuredOfferCode;
+                    
+                    if (featuredCodeName) {
+                        const offerRef = DB.collection('discountCodes').doc(featuredCodeName);
+                        const offerDoc = await offerRef.get();
+
+                        if (offerDoc.exists) {
+                            const coupon = offerDoc.data();
+                            if (coupon.isActive === true) {
+                                const code = offerDoc.id;
+                                const offerCodeDisplay = document.getElementById('offer-code-display');
+                                const offerDescription = document.getElementById('offer-description');
+                                const offerCodeBox = offerBanner.querySelector('.offer-code-box');
+                                
+                                offerCodeDisplay.textContent = code;
+                                if (coupon.description) {
+                                    offerDescription.textContent = coupon.description;
+                                }
+                                offerCodeBox.onclick = () => copyOfferCode(code, offerCodeBox);
+                                offerBanner.classList.remove('hidden');
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching featured offer:", error);
+                offerBanner.classList.add('hidden'); // Hide banner on error
+            }
+        }
+
+        function showStatusArea(ticket) {
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('status-area').classList.remove('hidden');
+            document.getElementById('pending-email').innerText = ticket.email;
+            document.getElementById('pending-code').innerText = ticket.uniqueCode;
+            checkVerificationStatus(ticket.uniqueCode);
+            statusCheckInterval = setInterval(() => checkVerificationStatus(ticket.uniqueCode), 15000);
+        }
+
+        function showMainContent() {
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('status-area').classList.add('hidden');
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+        }
+        
+        function startOver() {
+            localStorage.removeItem(STORAGE_KEY);
+            window.location.reload();
+        }
+
+        function cancelVerification() {
+            if (confirm("Are you sure you want to cancel this verification process?")) {
+                startOver();
+            }
+        }
+        
+        function copyOfferCode(code, element) {
+            navigator.clipboard.writeText(code).then(() => {
+                const originalContent = element.innerHTML;
+                element.innerHTML = `<span>COPIED!</span> <i class="fa-solid fa-check"></i>`;
+                element.style.borderColor = 'var(--success-color)';
+                setTimeout(() => {
+                    element.innerHTML = originalContent;
+                    element.style.borderColor = 'var(--border-color)';
+                }, 2500);
+            }).catch(err => console.error('Failed to copy offer code: ', err));
+        }
+
+        async function checkVerificationStatus(uniqueCode) {
+            const docRef = DB.collection('paymentVerifications').doc(uniqueCode);
+            try {
+                const doc = await docRef.get();
+                if (!doc.exists) { return; }
+                const docData = doc.data();
+                if (docData.verified === true && docData.assignedAccessCode) {
+                    clearInterval(statusCheckInterval);
+                    document.getElementById('pending-section').classList.add('hidden');
+                    const successSection = document.getElementById('success-section');
+                    document.getElementById('access-code-display').innerText = docData.assignedAccessCode;
+                    
+                    const planDuration = getPlanDurationInDays(docData.plan);
+                    if (docData.activationTimestamp && planDuration > 0) {
+                        const activationDate = docData.activationTimestamp.toDate();
+                        const expiryDate = new Date(activationDate);
+                        expiryDate.setDate(activationDate.getDate() + planDuration);
+                        document.getElementById('plan-validity').innerText = `Plan valid until: ${expiryDate.toLocaleDateString()}`;
+                    }
+
+                    successSection.classList.remove('hidden');
+                    document.getElementById('access-code-reveal').onclick = () => {
+                        navigator.clipboard.writeText(docData.assignedAccessCode).then(() => alert('Access Code copied!'));
+                    };
+                    localStorage.removeItem(STORAGE_KEY);
+                } 
+                else if (docData.verified === false) {
+                    if ('rejectionReason' in docData) {
+                        clearInterval(statusCheckInterval);
+                        document.getElementById('pending-section').classList.add('hidden');
+                        const rejectedSection = document.getElementById('rejected-section');
+                        const reason = docData.rejectionReason || "Details provided did not match our records.";
+                        document.getElementById('rejection-reason-text').innerText = reason;
+                        rejectedSection.classList.remove('hidden');
+                    }
+                }
+            } catch (error) { console.error("Error checking verification status:", error); }
+        }
+        
+        function getPlanDurationInDays(planName) {
+            if (planName.includes('Bronze')) return 30;
+            if (planName.includes('Silver')) return 90;
+            if (planName.includes('Gold')) return 365;
+            return 0;
+        }
+
+        function generateUniqueCode() {
+            const prefix = "STENO";
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345679";
+            let result = "";
+            for (let i = 0; i < 4; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); }
+            return `${prefix}-${result}`;
+        }
+        
+        function navigateToStep(stepNumber) {
+            currentStep = stepNumber;
+            document.querySelectorAll('.step').forEach((el, i) => el.classList.toggle('active', i + 1 === stepNumber));
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            const contentId = `step-${stepNumber}-${stepNumber === 1 ? 'order' : stepNumber === 2 ? 'payment' : 'verify'}`;
+            document.getElementById(contentId).classList.add('active');
+            
+            const actionButton = document.getElementById('modal-action-button');
+            const backButton = document.getElementById('back-button');
+            actionButton.disabled = false;
+            backButton.classList.add('hidden');
+
+            if (stepNumber === 1) {
+                actionButton.textContent = "Proceed to Payment";
+                actionButton.onclick = () => navigateToStep(2);
+            } else if (stepNumber === 2) {
+                actionButton.textContent = "Payment Done? Proceed to Verify";
+                actionButton.onclick = () => navigateToStep(3);
+                actionButton.disabled = !document.querySelector('.payment-option.selected');
+            } else if (stepNumber === 3) {
+                actionButton.textContent = "Verify My Payment";
+                actionButton.onclick = () => document.getElementById('verifyForm').requestSubmit();
+                backButton.classList.remove('hidden');
+            }
+        }
+
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                if (e.target.classList.contains('copy-button')) return;
+                document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+                const selectedOption = e.currentTarget;
+                selectedOption.classList.add('selected');
+                document.querySelectorAll('.payment-option-details').forEach(el => el.style.display = 'none');
+                selectedOption.querySelector('.payment-option-details').style.display = 'block';
+                if (selectedOption.id === 'qr-option' && !qrCodeInstance) { generateQRCode(); }
+                navigateToStep(2); 
+            });
+        });
+
+        function showPaymentModal(planName, planPrice) {
+            originalPrice = planPrice;
+            finalPrice = planPrice;
+            document.getElementById('summary-plan-name').innerText = planName;
+            document.getElementById('summary-total-price').innerText = `₹${finalPrice}`;
+            const uniqueCode = generateUniqueCode();
+            document.getElementById('unique-code-display-upi').innerText = uniqueCode;
+            document.getElementById('unique-code-display-qr').innerText = uniqueCode;
+            document.getElementById('planNameInput').value = planName;
+            document.getElementById('planPriceInput').value = finalPrice;
+            document.getElementById('uniqueCodeInput').value = uniqueCode;
+            document.getElementById('coupon-code-input').value = '';
+            document.getElementById('coupon-code-input').disabled = false;
+            document.getElementById('apply-coupon-btn').disabled = false;
+            document.getElementById('coupon-message').textContent = '';
+            document.getElementById('discount-row').classList.add('hidden');
+            document.getElementById('verifyForm').reset();
+            qrCodeInstance = null;
+            const qrContainer = document.getElementById('qr-code-container');
+            if(qrContainer) qrContainer.innerHTML = '';
+            document.querySelectorAll('.payment-option-details').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            navigateToStep(1);
+            paymentModal.classList.add('visible');
+        }
+
+        function hidePaymentModal() { paymentModal.classList.remove('visible'); }
+        function showTermsModal() { termsModal.classList.add('visible'); }
+        function hideTermsModal() { termsModal.classList.remove('visible'); }
+        
+        function copyUniqueCode(elementId, buttonElement) {
+            const codeText = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                buttonElement.textContent = 'Copied!';
+                setTimeout(() => { buttonElement.textContent = 'Copy'; }, 2000);
+            }).catch(err => { console.error('Failed to copy text: ', err); });
+        }
+
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qr-code-container');
+            if (!qrContainer) return;
+            qrContainer.innerHTML = "";
+            const uniqueCode = document.getElementById('uniqueCodeInput').value;
+            const upiString = `upi://pay?pa=${UPI_ID}&pn=Check%20My%20Steno&am=${finalPrice}&cu=INR&tn=${uniqueCode}`;
+            qrCodeInstance = new QRCode(qrContainer, { text: upiString, width: 130, height: 130, colorDark: "#0B1120", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+        }
+
+        async function applyCoupon() {
+            const couponInput = document.getElementById('coupon-code-input');
+            const applyBtn = document.getElementById('apply-coupon-btn');
+            const messageEl = document.getElementById('coupon-message');
+            // === START: MODIFIED CODE ===
+            const code = couponInput.value.trim(); // Removed .toUpperCase()
+            // === END: MODIFIED CODE ===
+            if (!code) { messageEl.textContent = "Please enter a code."; messageEl.className = 'coupon-message-error'; return; }
+            applyBtn.disabled = true;
+            messageEl.textContent = "Checking...";
+            messageEl.className = '';
+            try {
+                const docRef = DB.collection('discountCodes').doc(code);
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const coupon = doc.data();
+                    if (coupon.isActive) {
+                        let discountAmount = 0;
+                        if (coupon.type === 'percent') { discountAmount = (originalPrice * coupon.value) / 100; } 
+                        else if (coupon.type === 'fixed') { discountAmount = coupon.value; }
+                        finalPrice = Math.round(originalPrice - discountAmount);
+                        if (finalPrice < 0) finalPrice = 0;
+                        document.getElementById('summary-total-price').innerText = `₹${finalPrice}`;
+                        document.getElementById('planPriceInput').value = finalPrice;
+                        document.getElementById('summary-discount-amount').innerText = `- ₹${discountAmount.toFixed(2)}`;
+                        document.getElementById('discount-row').classList.remove('hidden');
+                        const description = coupon.description ? `<br><small>${coupon.description}</small>` : '';
+                        messageEl.innerHTML = `Coupon applied successfully!${description}`;
+                        messageEl.className = 'coupon-message-success';
+                        couponInput.disabled = true;
+                    } else {
+                        messageEl.textContent = "This coupon has expired.";
+                        messageEl.className = 'coupon-message-error';
+                        applyBtn.disabled = false;
+                    }
+                } else {
+                    messageEl.textContent = "Invalid coupon code.";
+                    messageEl.className = 'coupon-message-error';
+                    applyBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error applying coupon: ", error);
+                messageEl.textContent = "Could not verify coupon. Try again.";
+                messageEl.className = 'coupon-message-error';
+                applyBtn.disabled = false;
+            }
+        }
+
+        async function submitVerification(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('modal-action-button');
+            const formMessage = document.getElementById('form-message');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            const formData = {
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                transactionId: document.getElementById('transactionId').value,
+                plan: document.getElementById('planNameInput').value,
+                price: document.getElementById('planPriceInput').value,
+                uniqueCode: document.getElementById('uniqueCodeInput').value,
+                verified: false,
+                submissionTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            try {
+                await DB.collection('paymentVerifications').doc(formData.uniqueCode).set(formData);
+                const ticket = { uniqueCode: formData.uniqueCode, email: formData.email };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(ticket));
+                hidePaymentModal();
+                window.location.reload();
+            } catch (error) {
+                formMessage.textContent = 'Error. Please try again.';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Verify My Payment';
+                console.error("Firebase submission error:", error);
+            }
+        }
+    </script>
 </body>
 </html>
-
-
