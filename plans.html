@@ -29,6 +29,30 @@
         .page-container { max-width: 1100px; margin: 0 auto; padding: 4rem 2rem; }
         .hidden { display: none !important; }
 
+        /* --- STYLES FOR PERSISTENT ACCESS PASS --- */
+        #persistent-access-code-area { margin-bottom: 2rem; }
+        .persistent-pass-banner {
+            background: linear-gradient(45deg, rgba(16, 185, 129, 0.1), rgba(34, 211, 238, 0.1));
+            border: 1px solid var(--success-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            animation: fadeIn 0.5s ease;
+            position: relative;
+        }
+        .pass-info { flex-grow: 1; text-align: left; }
+        .pass-info h4 { margin: 0 0 0.25rem 0; font-size: 1.2rem; color: var(--success-color); }
+        .pass-info p { margin: 0; color: var(--secondary-text-color); font-size: 0.95rem; }
+        .pass-code-wrapper { display: flex; align-items: center; gap: 1rem; background-color: var(--primary-bg); padding: 0.8rem 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .pass-code-wrapper span { font-size: 1.3rem; font-weight: 700; letter-spacing: 2px; color: var(--text-color); }
+        .pass-code-wrapper button, .pass-dismiss-btn { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; font-size: 1.1rem; padding: 0.5rem; line-height: 1; }
+        .pass-dismiss-btn { align-self: flex-start; }
+        .pass-code-wrapper button:hover, .pass-dismiss-btn:hover { color: var(--text-color); }
+        /* --- END OF STYLES --- */
+
         .header-section { text-align: center; margin-bottom: 5rem; }
         .header-section h1 { font-size: 3.5rem; font-weight: 900; margin-bottom: 1rem; letter-spacing: -0.05em; line-height: 1.2; }
         .header-section .highlight { background: linear-gradient(90deg, var(--accent-silver), var(--accent-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -204,7 +228,13 @@
         .summary-row-discount { color: var(--success-color); }
 
         @media (max-width: 992px) { .plans-wrapper { flex-direction: column; align-items: center; } }
-        @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } #qr-code-area { flex-direction: column; text-align: center; } .qr-instructions { margin-top: 1rem; } }
+        @media (max-width: 768px) { 
+            .features-grid { grid-template-columns: 1fr; } 
+            #qr-code-area { flex-direction: column; text-align: center; } 
+            .qr-instructions { margin-top: 1rem; }
+            .persistent-pass-banner { flex-direction: column; text-align: center; gap: 1rem; }
+            .pass-dismiss-btn { position: absolute; top: 5px; right: 5px; }
+        }
     </style>
 </head>
 <body>
@@ -215,15 +245,15 @@
                 <div class="spinner"></div>
                 <h1>Verification in Progress</h1>
                 <p>Your submission is being verified. This page will update automatically once approved.</p>
+                <!-- MODIFICATION: ADDED EMAIL/SPAM NOTIFICATION -->
                 <div class="verification-notice">
-                    <strong>Please Note:</strong> This is a semi-automated process to ensure security. Activation can take anywhere from <strong>1 minute to 1 hour</strong>. Thank you for your patience!
+                    <p style="margin:0;"><strong>Please Note:</strong> Activation can take <strong>1 minute to 1 hour</strong>. You will also receive your access code via email. If you don't see it, please check your <strong>spam or junk folder</strong>.</p>
                 </div>
                 <div class="status-details">
                     <div class="detail-row"><span>Submitted Email:</span><strong id="pending-email"></strong></div>
                     <div class="detail-row"><span>Unique Code:</span><strong id="pending-code"></strong></div>
                 </div>
                 
-                <!-- NEW: CONTACT SECTION FOR PENDING PAGE -->
                 <div class="status-contact-footer">
                     <p style="margin-bottom: 1rem; color: var(--secondary-text-color);">Have a question about your payment? Contact us:</p>
                     <a href="mailto:checkmysteno@gmail.com"><i class="fa-solid fa-envelope"></i> Email</a>
@@ -253,6 +283,22 @@
     </div>
 
     <div id="main-content" class="page-container">
+        <!-- NEW SECTION: PERSISTENT ACCESS PASS BANNER -->
+        <div id="persistent-access-code-area" class="hidden">
+            <div class="persistent-pass-banner">
+                <button class="pass-dismiss-btn" onclick="dismissPersistentBanner()" title="Dismiss this notification">×</button>
+                <div class="pass-info">
+                    <h4>Your Access Pass is Active!</h4>
+                    <p>Here is your most recent access code. Keep it safe and use it on the login page.</p>
+                </div>
+                <div class="pass-code-wrapper">
+                    <span id="persistent-code-display"></span>
+                    <button onclick="copyPersistentCode(this)" title="Copy Code"><i class="fa-regular fa-copy"></i></button>
+                </div>
+            </div>
+        </div>
+        <!-- END OF NEW SECTION -->
+
         <div class="header-section">
              <h1>Unlock <span class="highlight">Every Powerful Feature.</span><br>Choose Your Access Pass.</h1>
             <p>All plans grant 100% access to the most advanced stenography toolkit. No holding back. Just pure practice and flawless analysis.</p>
@@ -442,7 +488,8 @@
 
         // --- GLOBAL CONFIGURATION ---
         const UPI_ID = "neha394@ybl";
-        const STORAGE_KEY = 'stenoVerificationTicket';
+        const PENDING_TICKET_KEY = 'stenoVerificationTicket'; // MODIFIED: Renamed for clarity
+        const PERSISTENT_ACCESS_CODE_KEY = 'stenoUserAccessCode'; // NEW: For persistent banner
         let statusCheckInterval = null;
         
         const paymentModal = document.getElementById('paymentModal');
@@ -456,8 +503,9 @@
             document.getElementById('upi-id-display').innerText = UPI_ID;
             
             fetchAndDisplayOffer();
+            displayPersistentAccessCode(); // NEW: Call function to show banner if code exists
 
-            const ticketData = localStorage.getItem(STORAGE_KEY);
+            const ticketData = localStorage.getItem(PENDING_TICKET_KEY);
             if (ticketData) {
                 const ticket = JSON.parse(ticketData);
                 showStatusArea(ticket);
@@ -469,8 +517,6 @@
         async function fetchAndDisplayOffer() {
             const offerBanner = document.getElementById('offer-banner');
             try {
-                // This direct lookup works with your security rules and avoids permission errors.
-                // It fetches a specific document from the 'siteConfig' collection.
                 const configRef = DB.collection('siteConfig').doc('config');
                 const configDoc = await configRef.get();
 
@@ -501,9 +547,36 @@
                 }
             } catch (error) {
                 console.error("Error fetching featured offer:", error);
-                offerBanner.classList.add('hidden'); // Hide banner on error
+                offerBanner.classList.add('hidden');
             }
         }
+
+        // --- NEW FUNCTIONS FOR PERSISTENT BANNER ---
+        function displayPersistentAccessCode() {
+            const accessData = localStorage.getItem(PERSISTENT_ACCESS_CODE_KEY);
+            if (accessData) {
+                const { code } = JSON.parse(accessData);
+                document.getElementById('persistent-code-display').textContent = code;
+                document.getElementById('persistent-access-code-area').classList.remove('hidden');
+            }
+        }
+
+        function copyPersistentCode(buttonElement) {
+            const codeText = document.getElementById('persistent-code-display').innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const originalIcon = buttonElement.innerHTML;
+                buttonElement.innerHTML = `<i class="fa-solid fa-check"></i>`;
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalIcon;
+                }, 2000);
+            }).catch(err => { console.error('Failed to copy text: ', err); });
+        }
+
+        function dismissPersistentBanner() {
+            localStorage.removeItem(PERSISTENT_ACCESS_CODE_KEY);
+            document.getElementById('persistent-access-code-area').classList.add('hidden');
+        }
+        // --- END OF NEW FUNCTIONS ---
 
         function showStatusArea(ticket) {
             document.getElementById('main-content').classList.add('hidden');
@@ -521,7 +594,7 @@
         }
         
         function startOver() {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(PENDING_TICKET_KEY);
             window.location.reload();
         }
 
@@ -551,6 +624,11 @@
                 const docData = doc.data();
                 if (docData.verified === true && docData.assignedAccessCode) {
                     clearInterval(statusCheckInterval);
+
+                    // NEW: Save to persistent storage
+                    const persistentData = { code: docData.assignedAccessCode, plan: docData.plan };
+                    localStorage.setItem(PERSISTENT_ACCESS_CODE_KEY, JSON.stringify(persistentData));
+                    
                     document.getElementById('pending-section').classList.add('hidden');
                     const successSection = document.getElementById('success-section');
                     document.getElementById('access-code-display').innerText = docData.assignedAccessCode;
@@ -567,7 +645,7 @@
                     document.getElementById('access-code-reveal').onclick = () => {
                         navigator.clipboard.writeText(docData.assignedAccessCode).then(() => alert('Access Code copied!'));
                     };
-                    localStorage.removeItem(STORAGE_KEY);
+                    localStorage.removeItem(PENDING_TICKET_KEY); // MODIFIED: Use new key name
                 } 
                 else if (docData.verified === false) {
                     if ('rejectionReason' in docData) {
@@ -577,6 +655,7 @@
                         const reason = docData.rejectionReason || "Details provided did not match our records.";
                         document.getElementById('rejection-reason-text').innerText = reason;
                         rejectedSection.classList.remove('hidden');
+                        localStorage.removeItem(PENDING_TICKET_KEY); // MODIFIED: Use new key name
                     }
                 }
             } catch (error) { console.error("Error checking verification status:", error); }
@@ -625,14 +704,14 @@
 
         document.querySelectorAll('.payment-option').forEach(option => {
             option.addEventListener('click', (e) => {
-                if (e.target.classList.contains('copy-button')) return;
+                if (e.target.closest('.copy-button')) return;
                 document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
                 const selectedOption = e.currentTarget;
                 selectedOption.classList.add('selected');
                 document.querySelectorAll('.payment-option-details').forEach(el => el.style.display = 'none');
                 selectedOption.querySelector('.payment-option-details').style.display = 'block';
                 if (selectedOption.id === 'qr-option' && !qrCodeInstance) { generateQRCode(); }
-                navigateToStep(2); 
+                document.getElementById('modal-action-button').disabled = false;
             });
         });
 
@@ -687,9 +766,7 @@
             const couponInput = document.getElementById('coupon-code-input');
             const applyBtn = document.getElementById('apply-coupon-btn');
             const messageEl = document.getElementById('coupon-message');
-            // === START: MODIFIED CODE ===
-            const code = couponInput.value.trim(); // Removed .toUpperCase()
-            // === END: MODIFIED CODE ===
+            const code = couponInput.value.trim();
             if (!code) { messageEl.textContent = "Please enter a code."; messageEl.className = 'coupon-message-error'; return; }
             applyBtn.disabled = true;
             messageEl.textContent = "Checking...";
@@ -744,13 +821,13 @@
                 plan: document.getElementById('planNameInput').value,
                 price: document.getElementById('planPriceInput').value,
                 uniqueCode: document.getElementById('uniqueCodeInput').value,
-                verified: false,
+                verified: false, // This is the original, unchanged line
                 submissionTimestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
             try {
                 await DB.collection('paymentVerifications').doc(formData.uniqueCode).set(formData);
                 const ticket = { uniqueCode: formData.uniqueCode, email: formData.email };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(ticket));
+                localStorage.setItem(PENDING_TICKET_KEY, JSON.stringify(ticket));
                 hidePaymentModal();
                 window.location.reload();
             } catch (error) {
@@ -763,3 +840,4 @@
     </script>
 </body>
 </html>
+
