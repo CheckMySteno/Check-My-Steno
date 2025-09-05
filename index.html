@@ -748,26 +748,10 @@
     };
     document.addEventListener('click', (e) => { if(!e.target.closest('#theme-switcher')) {const m = GID('theme-menu'); if(m) m.classList.remove('visible');} if(!e.target.closest('#notificationBtn') && !e.target.closest('#notificationPanel')) {const p = GID('notificationPanel'); if(p) p.classList.remove('visible');} });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAllTools(); GID('choiceModal').classList.remove('visible'); GID('loginModal').classList.remove('visible'); const majorModal = GID('majorAnnouncementModal'); if(majorModal && majorModal.classList.contains('visible')) { majorModal.querySelector('.close-button').click(); } } });
-    
-    // --- ANTI-INSPECTION SCRIPT ---
-    (function() {
-        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        document.addEventListener('keydown', function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 'I'.charCodeAt(0) || e.keyCode == 'C'.charCodeAt(0) || e.keyCode == 'J'.charCodeAt(0))) || (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) {
-                e.preventDefault();
-            }
-        });
-        const devToolsDetector = setInterval(function() {
-            const threshold = 160;
-            if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-                document.body.innerHTML = `<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; background-color: #0f172a; color: white;"><h1>Developer tools are not allowed on this page. Please close them to continue.</h1></div>`;
-                clearInterval(devToolsDetector);
-            }
-        }, 1000);
-    })();
 </script>    
 </body>
 </html>
+
 
 
 
