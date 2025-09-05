@@ -327,37 +327,20 @@
                 </div>
             </div>
 
-            <h2>Choose Your Pass</h2>
+            <h2>Get Your Pass</h2>
             <div class="plans-wrapper">
-                <div class="plan-card bronze">
-                    <h3>🥉 Bronze Pass</h3><p class="duration">1 Month Access</p><div class="price">₹299</div><p class="old-price">&nbsp;</p>
-                    <ul class="plan-features">
-                        <li><i class="fa-solid fa-check"></i> All Premium Features</li>
-                        <li><i class="fa-solid fa-check"></i> Full KC Library Access</li>
-                        <li><i class="fa-solid fa-check"></i> Perfect for a Trial Run</li>
-                    </ul>
-                    <button class="cta-button" onclick="showPaymentModal('Bronze Pass', 299)">Get Started</button>
-                </div>
-                <div class="plan-card silver">
-                    <div class="popular-badge">Best Value</div><h3>🥈 Silver Pass</h3><p class="duration">3 Months Access</p><div class="price">₹499</div><p class="old-price">Save 44% (vs. Monthly)</p>
-                     <ul class="plan-features">
-                        <li><i class="fa-solid fa-check"></i> All Premium Features</li>
-                        <li><i class="fa-solid fa-check"></i> Full KC Library Access</li>
-                        <li><i class="fa-solid fa-check"></i> Ideal for Exam Preparation</li>
-                        <li><i class="fa-solid fa-check"></i> <strong>Huge Savings!</strong></li>
-                    </ul>
-                    <button class="cta-button" onclick="showPaymentModal('Silver Pass', 499)">Get Started</button>
-                </div>
+                <!-- MODIFIED SECTION: ONLY ONE PLAN IS NOW SHOWN -->
                 <div class="plan-card gold">
-                    <h3>🥇 Gold Pass</h3><p class="duration">1 Year Access</p><div class="price">₹999</div><p class="old-price">Save 72% (vs. Monthly)</p>
+                    <h3>The Steno Pro Pass</h3><p class="duration">1 Month Access</p><div class="price">₹299</div><p class="old-price">&nbsp;</p>
                      <ul class="plan-features">
                         <li><i class="fa-solid fa-check"></i> All Premium Features</li>
                         <li><i class="fa-solid fa-check"></i> Full KC Library Access</li>
-                        <li><i class="fa-solid fa-check"></i> For Serious Long-Term Skill</li>
-                        <li><i class="fa-solid fa-check"></i> <strong>Maximum Value Guaranteed</strong></li>
+                        <li><i class="fa-solid fa-check"></i> Unlimited Practice & Analysis</li>
+                        <li><i class="fa-solid fa-check"></i> <strong>Everything Included</strong></li>
                     </ul>
-                    <button class="cta-button" onclick="showPaymentModal('Gold Pass', 999)">Get Started</button>
+                    <button class="cta-button" onclick="showPaymentModal('The Steno Pro Pass', 299)">Get Started</button>
                 </div>
+                <!-- END OF MODIFIED SECTION -->
             </div>
         </div>
         <div class="back-button-container">
@@ -662,10 +645,12 @@
         }
         
         function getPlanDurationInDays(planName) {
+            // Updated to reflect a single 1-month plan
+            if (planName.includes('The Steno Pro Pass')) return 30;
             if (planName.includes('Bronze')) return 30;
             if (planName.includes('Silver')) return 90;
             if (planName.includes('Gold')) return 365;
-            return 0;
+            return 30; // Default to 30 days
         }
 
         function generateUniqueCode() {
@@ -840,4 +825,5 @@
     </script>
 </body>
 </html>
+
 
