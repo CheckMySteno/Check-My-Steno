@@ -408,6 +408,20 @@
                <div class="graphic-content"><i class="fas fa-keyboard"></i></div>
            </div>
        </section>
+
+       <!-- === START OF ADDED DICTATIONS SECTION === -->
+       <section id="dictations" class="page-section">
+            <div class="section-content anim-hidden">
+                <div class="text-content">
+                    <h2>Practice Dictations</h2>
+                    <p>Listen to professionally recorded audio passages and transcribe them in real-time. Our dictation tool is perfect for improving your listening skills and shorthand speed for exams.</p>
+                    <button class="launch-button" data-tool="dictations">Launch Dictations Tool</button>
+                </div>
+                <div class="graphic-content"><i class="fas fa-microphone-alt"></i></div>
+            </div>
+        </section>
+        <!-- === END OF ADDED DICTATIONS SECTION === -->
+
        <section id="analysis" class="page-section">
            <div class="section-content anim-hidden">
                <div class="text-content">
@@ -452,6 +466,9 @@
     <nav class="dock">
         <div class="dock-item"><a href="#immersive-intro"><i class="fas fa-home"></i></a><span class="tooltip">Home</span></div>
         <div class="dock-item"><a href="#practice"><i class="fas fa-keyboard"></i></a><span class="tooltip">Practice KC</span></div>
+        <!-- === START OF ADDED DOCK ITEM === -->
+        <div class="dock-item"><a href="#dictations"><i class="fas fa-microphone-alt"></i></a><span class="tooltip">Dictations</span></div>
+        <!-- === END OF ADDED DOCK ITEM === -->
         <div class="dock-item"><a href="#analysis"><i class="fas fa-chart-line"></i></a><span class="tooltip">Test Analysis</span></div>
         <div class="dock-item"><a href="#checker"><i class="fas fa-check-double"></i></a><span class="tooltip">Transcription Checker</span></div>
         <div class="dock-item"><a href="#about"><i class="fas fa-book-open"></i></a><span class="tooltip">About</span></div>
@@ -473,6 +490,18 @@
         <div id="supportTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-headset"></i> My Support Tickets</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div id="supportContent" class="tool-content"></div></div>
         <div id="statusTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-server"></i> Platform Status</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div id="statusContent" class="tool-content"></div></div>
         <div id="contactTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-envelope"></i> Contact Us</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div id="contactContent" class="tool-content"></div></div>
+        <!-- === START OF ADDED TOOL OVERLAY === -->
+        <div id="dictationsTool" class="tool-overlay">
+            <header class="tool-header">
+                <h2><i class="fas fa-microphone-alt"></i> Dictations</h2>
+                <button class="close-tool-btn" onclick="closeAllTools()">Close</button>
+            </header>
+            <div class="tool-content" style="padding:0; overflow:hidden;">
+                <div class="loader"></div>
+                <iframe id="dictationsFrame" src="about:blank"></iframe>
+            </div>
+        </div>
+        <!-- === END OF ADDED TOOL OVERLAY === -->
     </div>
     
     <div id="pollToast" class="poll-toast">
@@ -622,7 +651,7 @@
     function updateUserUI(isLoggedIn, userName = '') {
         const headerActions = GID('headerActions');
         const allLaunchButtons = document.querySelectorAll('.launch-button');
-        const premiumTools = ['kc', 'test-analysis', 'transcription-checker'];
+        const premiumTools = ['kc', 'test-analysis', 'transcription-checker', 'dictations'];
 
         if (isLoggedIn) {
             headerActions.innerHTML = `
@@ -750,7 +779,8 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAllTools(); GID('choiceModal').classList.remove('visible'); GID('loginModal').classList.remove('visible'); const majorModal = GID('majorAnnouncementModal'); if(majorModal && majorModal.classList.contains('visible')) { majorModal.querySelector('.close-button').click(); } } });
 </script>    
 </body>
-</html>
+</html
+
 
 
 
