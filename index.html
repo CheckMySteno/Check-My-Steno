@@ -620,7 +620,7 @@
     const GID = id => document.getElementById(id);
     let accessCodeUnsubscribe = null, currentUser = null;
 
-// --- PART 2: CORE FUNCTIONS (UNCHANGED) ---
+// --- PART 2: CORE FUNCTIONS ---
     function setScrollLock(locked) { const action = locked ? 'add' : 'remove'; document.body.classList[action]('modal-open'); document.documentElement.classList[action]('modal-open'); }
     function launchTool(toolName) {
         const toolOverlay = GID(`${toolName}Tool`);
@@ -640,11 +640,55 @@
         toolOverlay.classList.add('visible'); setScrollLock(true);
     }
     function closeAllTools() { document.querySelectorAll('.tool-overlay').forEach(overlay => { const iframe = overlay.querySelector('iframe'); if (iframe) iframe.src = 'about:blank'; overlay.classList.remove('visible'); }); setScrollLock(false); }
-    function logout() { if (accessCodeUnsubscribe) accessCodeUnsubscribe(); localStorage.removeItem("checkMyStenoUser"); localStorage.removeItem("currentAccessCode"); currentUser = null; updateUserUI(false); closeAllTools(); window.location.hash = '#home'; }
+    
+    // MODIFIED LOGOUT FUNCTION
+    function logout() { 
+        if (accessCodeUnsubscribe) accessCodeUnsubscribe(); 
+        localStorage.removeItem("checkMyStenoUser"); 
+        localStorage.removeItem("currentAccessCode"); 
+        localStorage.removeItem("currentSessionId"); // MODIFIED
+        currentUser = null; 
+        updateUserUI(false); 
+        closeAllTools(); 
+        window.location.hash = '#home'; 
+    }
+
     function hideChoiceModal() { GID('choiceModal').classList.remove('visible'); setScrollLock(false); }
     function hideLoginModal() { GID('loginModal').classList.remove('visible'); setScrollLock(false); }
     function openLoginFromChoice() { hideChoiceModal(); setTimeout(() => GID('loginModal').classList.add('visible'), 300); }
-    function startAccessCodeListener(code) { if (accessCodeUnsubscribe) accessCodeUnsubscribe(); accessCodeUnsubscribe = DB.collection("accessCodes").doc(code).onSnapshot(doc => { if (!doc.exists || !doc.data().valid) { alert("Your session has expired or the access code is no longer valid."); logout(); } }); }
+    
+    // NEW SESSION LISTENER FUNCTION WITH DEBUGGING
+    function startSessionListener(code) {
+        if (accessCodeUnsubscribe) accessCodeUnsubscribe();
+
+        console.log('[Listener] Activated for access code:', code); // DEBUG MESSAGE 1
+
+        const userLoginRef = DB.collection("userLogins").doc(code);
+
+        accessCodeUnsubscribe = userLoginRef.onSnapshot(doc => {
+            if (!doc.exists) {
+                if (localStorage.getItem("currentAccessCode")) {
+                   logout();
+                }
+                return;
+            }
+
+            const latestSessionId = doc.data().sessionId;
+            const mySessionId = localStorage.getItem("currentSessionId");
+            
+            // DEBUG MESSAGES to see the values
+            console.log('------------------------------------');
+            console.log('[Listener] Received update from Firestore.');      // DEBUG MESSAGE 2
+            console.log('[Listener] ID from Firestore:', latestSessionId);   // DEBUG MESSAGE 3
+            console.log('[Listener] My ID from localStorage:', mySessionId); // DEBUG MESSAGE 4
+
+            if (latestSessionId && mySessionId && latestSessionId !== mySessionId) {
+                alert("This access code has been used to log in on another device. You are being logged out.");
+                logout();
+            }
+        });
+    }
+
     function applyTheme(themeName) { document.body.dataset.theme = themeName; localStorage.setItem('selectedTheme', themeName); }
     function attachThemeSwitcherListeners() { const themeBtn = GID('theme-btn'), themeMenu = GID('theme-menu'); if (!themeBtn || !themeMenu) return; let menuHTML = ''; const themes = {'default':{name:'Default',color:'#6366f1'},'galaxy':{name:'Galaxy',color:'#8b5cf6'},'sunset':{name:'Sunset',color:'#fb923c'},'oceanic':{name:'Oceanic',color:'#22d3ee'}}; for (const [key, theme] of Object.entries(themes)) { menuHTML += `<div class="theme-option" data-theme-id="${key}"><span class="color-swatch" style="background-color: ${theme.color};"></span>${theme.name}</div>`; } themeMenu.innerHTML = menuHTML; themeBtn.onclick = (e) => { e.stopPropagation(); themeMenu.classList.toggle('visible'); }; document.querySelectorAll('.theme-option').forEach(option => { option.onclick = () => { applyTheme(option.dataset.themeId); themeMenu.classList.remove('visible'); } }); }
     
@@ -691,7 +735,55 @@
         setTimeout(handleNotifications, 100);
     }
 
-    function validateAccessCode() { const name = GID("userName").value.trim(), email = GID("userEmail").value.trim(), code = GID("accessCode").value.trim(), loginError = GID("loginError"); if (!name || !email || !code) { loginError.textContent = "All fields are required."; return; } loginError.textContent = "Validating..."; DB.collection("accessCodes").doc(code).get().then(doc => { if (doc.exists && doc.data().valid) { const userData = { ...doc.data(), name, email }; currentUser = userData; localStorage.setItem("checkMyStenoUser", JSON.stringify(userData)); localStorage.setItem("currentAccessCode", code); hideLoginModal(); hideChoiceModal(); updateUserUI(true, name); startAccessCodeListener(code); checkForMessageOfTheDay(); DB.collection("userLogins").add({ name, email, usedAccessCode: code, loginTimestamp: firebase.firestore.FieldValue.serverTimestamp() }); } else { loginError.textContent = "Invalid or expired Access Code."; } }).catch(err => { loginError.textContent = "Error connecting."; console.error(err); }); }
+    // MODIFIED VALIDATE ACCESS CODE FUNCTION
+    async function validateAccessCode() {
+        const name = GID("userName").value.trim();
+        const email = GID("userEmail").value.trim();
+        const code = GID("accessCode").value.trim();
+        const loginError = GID("loginError");
+
+        if (!name || !email || !code) {
+            loginError.textContent = "All fields are required.";
+            return;
+        }
+
+        loginError.textContent = "Validating...";
+
+        const accessCodeRef = DB.collection("accessCodes").doc(code);
+        const doc = await accessCodeRef.get();
+
+        if (doc.exists && doc.data().valid) {
+            try {
+                const newSessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                const userLoginRef = DB.collection("userLogins").doc(code);
+                await userLoginRef.set({
+                    name: name,
+                    email: email,
+                    loginTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    sessionId: newSessionId
+                });
+
+                const userData = { ...doc.data(), name, email };
+                currentUser = userData;
+                localStorage.setItem("checkMyStenoUser", JSON.stringify(userData));
+                localStorage.setItem("currentAccessCode", code);
+                localStorage.setItem("currentSessionId", newSessionId);
+
+                hideLoginModal();
+                hideChoiceModal();
+                updateUserUI(true, name);
+                startSessionListener(code);
+                checkForMessageOfTheDay();
+
+            } catch (err) {
+                loginError.textContent = "Error creating session. Please try again.";
+                console.error("Session creation error:", err);
+            }
+        } else {
+            loginError.textContent = "Invalid or expired Access Code.";
+        }
+    }
     
 // --- PART 3: NEW FEATURE FUNCTIONS (UNCHANGED) ---
     const feedbackModal = GID('feedbackModal');
@@ -755,7 +847,7 @@
 
     function showMajorAnnouncement() { const modal = GID('majorAnnouncementModal'); const closeBtn = GID('closeMajorAnnouncement'); const imgEl = GID('majorAnnouncementImage'); const titleEl = GID('majorAnnouncementTitle'); const bodyEl = GID('majorAnnouncementBody'); const announcementRef = DB.collection('siteConfig').doc('majorAnnouncement'); announcementRef.get().then(doc => { if (doc.exists) { const data = doc.data(); if (data.isActive && data.id) { const announcementKey = `announcementClosed_${data.id}`; const hasBeenClosed = localStorage.getItem(announcementKey); if (!hasBeenClosed) { titleEl.textContent = data.title || ''; bodyEl.textContent = data.body || ''; if (data.imageUrl) { imgEl.src = data.imageUrl; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } modal.classList.add('visible'); setScrollLock(true); closeBtn.onclick = () => { modal.classList.remove('visible'); setScrollLock(false); localStorage.setItem(announcementKey, 'true'); }; } } } }).catch(err => { console.error("Error fetching major announcement:", err); }); }
     
-// --- PART 4: MAIN EXECUTION (UNCHANGED, except for refined dock script) ---
+// --- PART 4: MAIN EXECUTION ---
     window.onload = function() {
         document.querySelectorAll('.launch-button').forEach(btn => { btn.dataset.originalText = btn.innerHTML; });
         const userSession = localStorage.getItem("checkMyStenoUser");
@@ -763,7 +855,7 @@
         if (userSession && accessCode) {
             currentUser = JSON.parse(userSession);
             updateUserUI(true, currentUser.name);
-            startAccessCodeListener(accessCode);
+            startSessionListener(accessCode); // MODIFIED
         } else { updateUserUI(false); }
         const savedTheme = localStorage.getItem('selectedTheme') || 'default';
         applyTheme(savedTheme);
@@ -779,7 +871,8 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAllTools(); GID('choiceModal').classList.remove('visible'); GID('loginModal').classList.remove('visible'); const majorModal = GID('majorAnnouncementModal'); if(majorModal && majorModal.classList.contains('visible')) { majorModal.querySelector('.close-button').click(); } } });
 </script>    
 </body>
-</html
+</html>
+
 
 
 
