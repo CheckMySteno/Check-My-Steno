@@ -482,26 +482,17 @@
     <div class="modal-overlay" id="messageOfTheDayModal"><div class="modal-content"><button class="close-button" onclick="this.parentElement.parentElement.classList.remove('visible'); setScrollLock(false);">&times;</button><h2>A Message for You</h2><p id="motdBody"></p></div></div>
     <div class="modal-overlay" id="feedbackModal"><div class="modal-content"><button class="close-button" onclick="hideFeedbackModal()">&times;</button><h2>Submit Feedback</h2><p>We'd love to hear your thoughts!</p><select id="feedbackType"><option>Suggestion</option><option>Bug Report</option><option>Other</option></select><textarea id="feedbackMessage" rows="5" placeholder="Your message..."></textarea><button class="cta-button" onclick="submitFeedback()">Send Feedback</button><p id="feedbackStatus" style="min-height: 1em; margin-top:1rem;"></p></div></div>
     
+    <div class="modal-overlay" id="telegramModal"> <div class="modal-content"> <button class="close-button" onclick="hideTelegramModal(false)">&times;</button> <i class="fab fa-telegram-plane" style="font-size: 3rem; color: #2AABEE; margin-bottom: 1rem; display: block;"></i> <h2>Join our Telegram Group!</h2> <p>For the latest updates, announcements, and support, join our official community.</p> <a href="https://t.me/Checkmystenoo" target="_blank" rel="noopener noreferrer" class="cta-button" style="display:block; text-decoration:none; margin-top: 1.5rem;" onclick="hideTelegramModal(true)"> <i class="fab fa-telegram-plane"></i> Join Now </a> <button style="background:none; border:none; color:var(--secondary-text-color); cursor:pointer; margin-top:1.5rem; font-size: 0.9rem;" onclick="hideTelegramModal(true)">Don't show me again</button> </div> </div>
+
     <div id="toolOverlays">
         <div id="kcTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-keyboard"></i> Practice KC</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div class="tool-content" style="padding:0; overflow:hidden;"><div class="loader"></div><iframe id="kcFrame" src="about:blank"></iframe></div></div>
         <div id="test-analysisTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-chart-line"></i> Test Analysis</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div class="tool-content" style="padding:0; overflow:hidden;"><div class="loader"></div><iframe id="test-analysisFrame" src="about:blank"></iframe></div></div>
         <div id="transcription-checkerTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-check-double"></i> Transcription Checker</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div class="tool-content" style="padding:0; overflow:hidden;"><div class="loader"></div><iframe id="transcription-checkerFrame" src="about:blank"></iframe></div></div>
         <div id="aboutTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-book-open"></i> About</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div class="tool-content" style="padding:0; overflow:hidden;"><div class="loader"></div><iframe id="aboutFrame" src="about:blank"></iframe></div></div>
-        <div id="supportTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-headset"></i> My Support Tickets</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div id="supportContent" class="tool-content"></div></div>
         <div id="statusTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-server"></i> Platform Status</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div id="statusContent" class="tool-content"></div></div>
         <div id="contactTool" class="tool-overlay"><header class="tool-header"><h2><i class="fas fa-envelope"></i> Contact Us</h2><button class="close-tool-btn" onclick="closeAllTools()">Close</button></header><div id="contactContent" class="tool-content"></div></div>
-        <!-- === START OF ADDED TOOL OVERLAY === -->
-        <div id="dictationsTool" class="tool-overlay">
-            <header class="tool-header">
-                <h2><i class="fas fa-microphone-alt"></i> Dictations</h2>
-                <button class="close-tool-btn" onclick="closeAllTools()">Close</button>
-            </header>
-            <div class="tool-content" style="padding:0; overflow:hidden;">
-                <div class="loader"></div>
-                <iframe id="dictationsFrame" src="about:blank"></iframe>
-            </div>
-        </div>
-        <!-- === END OF ADDED TOOL OVERLAY === -->
+        <div id="dictationsTool" class="tool-overlay"> <header class="tool-header"> <h2><i class="fas fa-microphone-alt"></i> Dictations</h2> <button class="close-tool-btn" onclick="closeAllTools()">Close</button> </header> <div class="tool-content" style="padding:0; overflow:hidden;"> <div class="loader"></div> <iframe id="dictationsFrame" src="about:blank"></iframe> </div> </div>
+        <!-- REMOVED subscriptionTool and supportTool Overlays -->
     </div>
     
     <div id="pollToast" class="poll-toast">
@@ -511,105 +502,20 @@
     </div>
     
 <script>
-    // --- SCRIPT FOR IMMERSIVE SLIDER INTRODUCTION ---
+    // --- SCRIPT FOR IMMERSIVE SLIDER INTRODUCTION (UNCHANGED) ---
     document.addEventListener('DOMContentLoaded', () => {
-        const intro = document.getElementById('immersive-intro');
-        if (!intro) return;
-
-        const track = intro.querySelector('.intro-track');
-        const slides = Array.from(intro.querySelectorAll('.intro-slide'));
-        const scrollPrompt = intro.querySelector('#scroll-prompt');
-        const discoverBtn = intro.querySelector('#discover-features-btn');
-
-        const slideCount = slides.length;
-        let currentIndex = 0;
-        const slideDuration = 5000;
-        let autoplayInterval = null;
-        let typewriterTimeout = null;
-        
-        // Data for the 4 FEATURE slides.
-        const stepsData = [
-            { text: `The quick brown fox <span class="highlight highlight-ssc">jumps</span> over the lazy dog. This is a test...`, score: { start: 98.0, end: 98.0, prefix: `<strong>Initial Score:</strong> `, suffix: `% Accuracy`}, activeCallout: 0 },
-            { text: `The quick brown fox jumps over the lazy dog. This is a... <span class="highlight highlight-match">showcase</span> its features.`, score: `<strong>Word Match:</strong> "showcase" vs "show case"`, activeCallout: 1 },
-            { text: `The quick brown fox <span class="highlight highlight-re-eval">jumped</span> over the lazy dog. This is a test...`, score: { start: 98.0, end: 99.0, prefix: `<strong>New Score:</strong> `, suffix: `% <span style="color:var(--success-color);">(+1.0%)</span>`}, activeCallout: 2 },
-            { text: `<i class="fas fa-chart-line" style="font-size: 8rem; opacity: 0.5; display: block; text-align: center;"></i>`, score: `<strong>Track Your Growth Over Time</strong>`, activeCallout: 3, isHTML: true }
-        ];
-        
-        function runTypewriter(data, textElement) {
-            clearTimeout(typewriterTimeout);
-            textElement.innerHTML = '';
-            if (data.isHTML) { textElement.innerHTML = data.text; return; }
-            const wordsAndTags = data.text.match(/<[^>]+>|[^<>\s]+|\s+/g) || [];
-            let displayedHTML = ''; let i = 0;
-            function typeWord() {
-                if (i < wordsAndTags.length) {
-                    displayedHTML += wordsAndTags[i];
-                    textElement.innerHTML = displayedHTML;
-                    i++;
-                    const delay = wordsAndTags[i-1].startsWith('<') ? 0 : 70;
-                    typewriterTimeout = setTimeout(typeWord, delay);
-                }
-            }
-            typeWord();
-        }
-
-        function animateValue(obj, start, end, duration, data) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const currentValue = progress * (end - start) + start;
-                if (typeof data.score === 'object') {
-                    obj.innerHTML = `${data.score.prefix}${currentValue.toFixed(1)}${data.score.suffix}`;
-                }
-                if (progress < 1) { window.requestAnimationFrame(step); }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        function updateVisuals(featureIndex) {
-            const currentSlide = slides[featureIndex + 1];
-            const data = stepsData[featureIndex];
-            const analyzerTextEl = currentSlide.querySelector('.analyzer-text-content');
-            const scoreTextEl = currentSlide.querySelector('.score-text');
-            runTypewriter(data, analyzerTextEl);
-            const scoreData = data.score;
-            if (typeof scoreData === 'object') {
-                animateValue(scoreTextEl, scoreData.start, scoreData.end, 500, data);
-            } else {
-                scoreTextEl.innerHTML = scoreData;
-            }
-            scoreTextEl.classList.add('is-active');
-            document.querySelectorAll('.feature-callout').forEach(c => c.classList.remove('is-active'));
-            const activeCallout = document.getElementById(`callout-${data.activeCallout + 1}`);
-            if (activeCallout) { activeCallout.classList.add('is-active'); }
-        }
-
-        function moveToSlide(targetIndex) {
-            track.style.transform = `translateX(-${targetIndex * 100}vw)`;
-            currentIndex = targetIndex;
-            scrollPrompt.classList.toggle('visible', targetIndex === slideCount - 1);
-            if (targetIndex > 0) {
-                updateVisuals(targetIndex - 1);
-            }
-            resetAutoplay();
-        }
-        
-        function resetAutoplay() {
-            clearInterval(autoplayInterval);
-            autoplayInterval = setInterval(() => {
-                const nextIndex = (currentIndex + 1) % slideCount;
-                moveToSlide(nextIndex);
-            }, slideDuration);
-        }
-
-        discoverBtn.addEventListener('click', () => {
-             moveToSlide(1);
-        });
-        
+        const intro = document.getElementById('immersive-intro'); if (!intro) return;
+        const track = intro.querySelector('.intro-track'); const slides = Array.from(intro.querySelectorAll('.intro-slide')); const scrollPrompt = intro.querySelector('#scroll-prompt'); const discoverBtn = intro.querySelector('#discover-features-btn');
+        const slideCount = slides.length; let currentIndex = 0; const slideDuration = 5000; let autoplayInterval = null; let typewriterTimeout = null;
+        const stepsData = [ { text: `The quick brown fox <span class="highlight highlight-ssc">jumps</span> over the lazy dog. This is a test...`, score: { start: 98.0, end: 98.0, prefix: `<strong>Initial Score:</strong> `, suffix: `% Accuracy`}, activeCallout: 0 }, { text: `The quick brown fox jumps over the lazy dog. This is a... <span class="highlight highlight-match">showcase</span> its features.`, score: `<strong>Word Match:</strong> "showcase" vs "show case"`, activeCallout: 1 }, { text: `The quick brown fox <span class="highlight highlight-re-eval">jumped</span> over the lazy dog. This is a test...`, score: { start: 98.0, end: 99.0, prefix: `<strong>New Score:</strong> `, suffix: `% <span style="color:var(--success-color);">(+1.0%)</span>`}, activeCallout: 2 }, { text: `<i class="fas fa-chart-line" style="font-size: 8rem; opacity: 0.5; display: block; text-align: center;"></i>`, score: `<strong>Track Your Growth Over Time</strong>`, activeCallout: 3, isHTML: true } ];
+        function runTypewriter(data, textElement) { clearTimeout(typewriterTimeout); textElement.innerHTML = ''; if (data.isHTML) { textElement.innerHTML = data.text; return; } const wordsAndTags = data.text.match(/<[^>]+>|[^<>\s]+|\s+/g) || []; let displayedHTML = ''; let i = 0; function typeWord() { if (i < wordsAndTags.length) { displayedHTML += wordsAndTags[i]; textElement.innerHTML = displayedHTML; i++; const delay = wordsAndTags[i-1].startsWith('<') ? 0 : 70; typewriterTimeout = setTimeout(typeWord, delay); } } typeWord(); }
+        function animateValue(obj, start, end, duration, data) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); const currentValue = progress * (end - start) + start; if (typeof data.score === 'object') { obj.innerHTML = `${data.score.prefix}${currentValue.toFixed(1)}${data.score.suffix}`; } if (progress < 1) { window.requestAnimationFrame(step); } }; window.requestAnimationFrame(step); }
+        function updateVisuals(featureIndex) { const currentSlide = slides[featureIndex + 1]; const data = stepsData[featureIndex]; const analyzerTextEl = currentSlide.querySelector('.analyzer-text-content'); const scoreTextEl = currentSlide.querySelector('.score-text'); runTypewriter(data, analyzerTextEl); const scoreData = data.score; if (typeof scoreData === 'object') { animateValue(scoreTextEl, scoreData.start, scoreData.end, 500, data); } else { scoreTextEl.innerHTML = scoreData; } scoreTextEl.classList.add('is-active'); document.querySelectorAll('.feature-callout').forEach(c => c.classList.remove('is-active')); const activeCallout = document.getElementById(`callout-${data.activeCallout + 1}`); if (activeCallout) { activeCallout.classList.add('is-active'); } }
+        function moveToSlide(targetIndex) { track.style.transform = `translateX(-${targetIndex * 100}vw)`; currentIndex = targetIndex; scrollPrompt.classList.toggle('visible', targetIndex === slideCount - 1); if (targetIndex > 0) { updateVisuals(targetIndex - 1); } resetAutoplay(); }
+        function resetAutoplay() { clearInterval(autoplayInterval); autoplayInterval = setInterval(() => { const nextIndex = (currentIndex + 1) % slideCount; moveToSlide(nextIndex); }, slideDuration); }
+        discoverBtn.addEventListener('click', () => { moveToSlide(1); });
         intro.addEventListener('mouseenter', () => clearInterval(autoplayInterval));
         intro.addEventListener('mouseleave', resetAutoplay);
-        
         moveToSlide(0);
     });
 
@@ -620,14 +526,15 @@
     const GID = id => document.getElementById(id);
     let accessCodeUnsubscribe = null, currentUser = null;
 
-// --- PART 2: CORE FUNCTIONS ---
+// --- PART 2: CORE FUNCTIONS (SIMPLIFIED) ---
     function setScrollLock(locked) { const action = locked ? 'add' : 'remove'; document.body.classList[action]('modal-open'); document.documentElement.classList[action]('modal-open'); }
     function launchTool(toolName) {
         const toolOverlay = GID(`${toolName}Tool`);
         if (!toolOverlay) return;
-        if (toolName === 'support') renderSupportTickets();
+        // Only render dynamic content if the tool needs it
         if (toolName === 'status') renderPlatformStatus();
         if (toolName === 'contact') renderContactInfo();
+        
         const iframe = toolOverlay.querySelector('iframe');
         if(iframe) {
             const loader = toolOverlay.querySelector('.loader');
@@ -640,58 +547,15 @@
         toolOverlay.classList.add('visible'); setScrollLock(true);
     }
     function closeAllTools() { document.querySelectorAll('.tool-overlay').forEach(overlay => { const iframe = overlay.querySelector('iframe'); if (iframe) iframe.src = 'about:blank'; overlay.classList.remove('visible'); }); setScrollLock(false); }
-    
-    // MODIFIED LOGOUT FUNCTION
-    function logout() { 
-        if (accessCodeUnsubscribe) accessCodeUnsubscribe(); 
-        localStorage.removeItem("checkMyStenoUser"); 
-        localStorage.removeItem("currentAccessCode"); 
-        localStorage.removeItem("currentSessionId"); // MODIFIED
-        currentUser = null; 
-        updateUserUI(false); 
-        closeAllTools(); 
-        window.location.hash = '#home'; 
-    }
-
+    function logout() { if (accessCodeUnsubscribe) accessCodeUnsubscribe(); localStorage.removeItem("checkMyStenoUser"); localStorage.removeItem("currentAccessCode"); localStorage.removeItem("currentSessionId"); currentUser = null; updateUserUI(false); closeAllTools(); window.location.hash = '#home'; }
     function hideChoiceModal() { GID('choiceModal').classList.remove('visible'); setScrollLock(false); }
     function hideLoginModal() { GID('loginModal').classList.remove('visible'); setScrollLock(false); }
     function openLoginFromChoice() { hideChoiceModal(); setTimeout(() => GID('loginModal').classList.add('visible'), 300); }
-    
-    // NEW SESSION LISTENER FUNCTION WITH DEBUGGING
-    function startSessionListener(code) {
-        if (accessCodeUnsubscribe) accessCodeUnsubscribe();
-
-        console.log('[Listener] Activated for access code:', code); // DEBUG MESSAGE 1
-
-        const userLoginRef = DB.collection("userLogins").doc(code);
-
-        accessCodeUnsubscribe = userLoginRef.onSnapshot(doc => {
-            if (!doc.exists) {
-                if (localStorage.getItem("currentAccessCode")) {
-                   logout();
-                }
-                return;
-            }
-
-            const latestSessionId = doc.data().sessionId;
-            const mySessionId = localStorage.getItem("currentSessionId");
-            
-            // DEBUG MESSAGES to see the values
-            console.log('------------------------------------');
-            console.log('[Listener] Received update from Firestore.');      // DEBUG MESSAGE 2
-            console.log('[Listener] ID from Firestore:', latestSessionId);   // DEBUG MESSAGE 3
-            console.log('[Listener] My ID from localStorage:', mySessionId); // DEBUG MESSAGE 4
-
-            if (latestSessionId && mySessionId && latestSessionId !== mySessionId) {
-                alert("This access code has been used to log in on another device. You are being logged out.");
-                logout();
-            }
-        });
-    }
-
+    function startSessionListener(code) { if (accessCodeUnsubscribe) accessCodeUnsubscribe(); const userLoginRef = DB.collection("userLogins").doc(code); accessCodeUnsubscribe = userLoginRef.onSnapshot(doc => { if (!doc.exists) { if (localStorage.getItem("currentAccessCode")) { logout(); } return; } const latestSessionId = doc.data().sessionId; const mySessionId = localStorage.getItem("currentSessionId"); if (latestSessionId && mySessionId && latestSessionId !== mySessionId) { alert("This access code has been used to log in on another device. You are being logged out."); logout(); } }); }
     function applyTheme(themeName) { document.body.dataset.theme = themeName; localStorage.setItem('selectedTheme', themeName); }
     function attachThemeSwitcherListeners() { const themeBtn = GID('theme-btn'), themeMenu = GID('theme-menu'); if (!themeBtn || !themeMenu) return; let menuHTML = ''; const themes = {'default':{name:'Default',color:'#6366f1'},'galaxy':{name:'Galaxy',color:'#8b5cf6'},'sunset':{name:'Sunset',color:'#fb923c'},'oceanic':{name:'Oceanic',color:'#22d3ee'}}; for (const [key, theme] of Object.entries(themes)) { menuHTML += `<div class="theme-option" data-theme-id="${key}"><span class="color-swatch" style="background-color: ${theme.color};"></span>${theme.name}</div>`; } themeMenu.innerHTML = menuHTML; themeBtn.onclick = (e) => { e.stopPropagation(); themeMenu.classList.toggle('visible'); }; document.querySelectorAll('.theme-option').forEach(option => { option.onclick = () => { applyTheme(option.dataset.themeId); themeMenu.classList.remove('visible'); } }); }
     
+    // === START: FINAL CORRECTED updateUserUI FUNCTION ===
     function updateUserUI(isLoggedIn, userName = '') {
         const headerActions = GID('headerActions');
         const allLaunchButtons = document.querySelectorAll('.launch-button');
@@ -700,9 +564,9 @@
         if (isLoggedIn) {
             headerActions.innerHTML = `
                 <div id="theme-switcher"><button id="theme-btn" title="Change Theme"><i class="fas fa-palette"></i></button><div id="theme-menu"></div></div>
-                <a href="features.html" class="header-icon-btn" title="Features"><i class="fas fa-star"></i></a>
+                <a href="plans.html" class="header-icon-btn" title="Subscribe"><i class="fas fa-gem"></i></a>
                 <button id="notificationBtn" class="header-icon-btn" title="Notifications"><i class="fas fa-bell"></i><span id="notificationBadge" class="notification-badge" style="display: none;"></span></button>
-                <button class="header-icon-btn" title="My Support Tickets" onclick="launchTool('support')"><i class="fas fa-headset"></i></button>
+                <button class="header-icon-btn" title="Contact Us" onclick="launchTool('contact')"><i class="fas fa-headset"></i></button>
                 <a href="demo.html" class="cta-button demo-button">Try Demo</a>
                 <span id="userInfo">Welcome, ${userName}!</span>
                 <button id="logoutBtn" class="cta-button" onclick="logout()">Logout</button>
@@ -715,8 +579,9 @@
         } else {
             headerActions.innerHTML = `
                 <div id="theme-switcher"><button id="theme-btn" title="Change Theme"><i class="fas fa-palette"></i></button><div id="theme-menu"></div></div>
-                <a href="features.html" class="header-icon-btn" title="Features"><i class="fas fa-star"></i></a>
+                <a href="plans.html" class="header-icon-btn" title="Subscribe"><i class="fas fa-gem"></i></a>
                 <button id="notificationBtn" class="header-icon-btn" title="Notifications"><i class="fas fa-bell"></i><span id="notificationBadge" class="notification-badge" style="display: none;"></span></button>
+                <button class="header-icon-btn" title="Contact Us" onclick="launchTool('contact')"><i class="fas fa-headset"></i></button>
                 <a href="demo.html" class="cta-button demo-button">Try Demo</a>
                 <button id="loginBtn" class="cta-button" onclick="GID('choiceModal').classList.add('visible'); setScrollLock(true);">Unlock Full Access</button>
             `;
@@ -734,117 +599,34 @@
         attachThemeSwitcherListeners();
         setTimeout(handleNotifications, 100);
     }
-
-    // MODIFIED VALIDATE ACCESS CODE FUNCTION
-    async function validateAccessCode() {
-        const name = GID("userName").value.trim();
-        const email = GID("userEmail").value.trim();
-        const code = GID("accessCode").value.trim();
-        const loginError = GID("loginError");
-
-        if (!name || !email || !code) {
-            loginError.textContent = "All fields are required.";
-            return;
-        }
-
-        loginError.textContent = "Validating...";
-
-        const accessCodeRef = DB.collection("accessCodes").doc(code);
-        const doc = await accessCodeRef.get();
-
-        if (doc.exists && doc.data().valid) {
-            try {
-                const newSessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-                const userLoginRef = DB.collection("userLogins").doc(code);
-                await userLoginRef.set({
-                    name: name,
-                    email: email,
-                    loginTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    sessionId: newSessionId
-                });
-
-                const userData = { ...doc.data(), name, email };
-                currentUser = userData;
-                localStorage.setItem("checkMyStenoUser", JSON.stringify(userData));
-                localStorage.setItem("currentAccessCode", code);
-                localStorage.setItem("currentSessionId", newSessionId);
-
-                hideLoginModal();
-                hideChoiceModal();
-                updateUserUI(true, name);
-                startSessionListener(code);
-                checkForMessageOfTheDay();
-
-            } catch (err) {
-                loginError.textContent = "Error creating session. Please try again.";
-                console.error("Session creation error:", err);
-            }
-        } else {
-            loginError.textContent = "Invalid or expired Access Code.";
-        }
-    }
+    // === END: FINAL CORRECTED updateUserUI FUNCTION ===
     
-// --- PART 3: NEW FEATURE FUNCTIONS (UNCHANGED) ---
+    async function validateAccessCode() { const name = GID("userName").value.trim(); const email = GID("userEmail").value.trim(); const code = GID("accessCode").value.trim(); const loginError = GID("loginError"); if (!name || !email || !code) { loginError.textContent = "All fields are required."; return; } loginError.textContent = "Validating..."; const accessCodeRef = DB.collection("accessCodes").doc(code); const doc = await accessCodeRef.get(); if (doc.exists && doc.data().valid) { try { const newSessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; const userLoginRef = DB.collection("userLogins").doc(code); await userLoginRef.set({ name: name, email: email, loginTimestamp: firebase.firestore.FieldValue.serverTimestamp(), sessionId: newSessionId }); const userData = { ...doc.data(), name, email, code }; currentUser = userData; localStorage.setItem("checkMyStenoUser", JSON.stringify(userData)); localStorage.setItem("currentAccessCode", code); localStorage.setItem("currentSessionId", newSessionId); hideLoginModal(); hideChoiceModal(); updateUserUI(true, name); startSessionListener(code); checkForMessageOfTheDay(); } catch (err) { loginError.textContent = "Error creating session. Please try again."; console.error("Session creation error:", err); } } else { loginError.textContent = "Invalid or expired Access Code."; } }
+    
+// --- PART 3: FEATURE FUNCTIONS (ALL TICKET AND SUBSCRIPTION FUNCTIONS REMOVED) ---
+    function showTelegramModal() { if (localStorage.getItem('hideTelegramModal') !== 'true') { setTimeout(() => { GID('telegramModal').classList.add('visible'); setScrollLock(true); }, 2500); } }
+    function hideTelegramModal(preventShowAgain) { if (preventShowAgain) { localStorage.setItem('hideTelegramModal', 'true'); } GID('telegramModal').classList.remove('visible'); setScrollLock(false); }
+    function renderContactInfo() {
+        const content = GID('contactContent');
+        content.innerHTML = `
+            <div style="text-align:center;">
+                <p style="font-size: 1.2rem; color: var(--secondary-text-color);">For any inquiries, please reach out to us:</p>
+                <div style="margin-top: 2rem; font-size: 1.1rem; line-height: 2;">
+                    <p><strong><i class="fas fa-envelope fa-fw"></i> Email:</strong> <a href="mailto:Checkmysteno@gmail.com">Checkmysteno@gmail.com</a></p>
+                    <p><strong><i class="fab fa-telegram-plane fa-fw"></i> Personal Telegram:</strong> <a href="https://t.me/CheckMySteno" target="_blank" rel="noopener noreferrer">@CheckMySteno</a></p>
+                    <p><strong><i class="fas fa-users fa-fw"></i> Telegram Group:</strong> <a href="https://t.me/Checkmystenoo" target="_blank" rel="noopener noreferrer">Join our Group</a></p>
+                </div>
+            </div>`;
+    }
     const feedbackModal = GID('feedbackModal');
     function showFeedbackModal() { if(feedbackModal) { feedbackModal.classList.add('visible'); setScrollLock(true); } }
     function hideFeedbackModal() { if(feedbackModal) { feedbackModal.classList.remove('visible'); setScrollLock(false); GID('feedbackMessage').value = ''; GID('feedbackStatus').textContent = ''; } }
     async function submitFeedback() { const type = GID('feedbackType').value, message = GID('feedbackMessage').value.trim(), statusEl = GID('feedbackStatus'); if (!message) { statusEl.textContent = "Message cannot be empty."; return; } statusEl.textContent = "Sending..."; const feedbackData = { type, message, timestamp: firebase.firestore.FieldValue.serverTimestamp(), status: 'New' }; if (currentUser) { feedbackData.userEmail = currentUser.email; feedbackData.userName = currentUser.name; } try { await DB.collection('feedback').add(feedbackData); statusEl.textContent = "Thank you! Your feedback has been sent."; setTimeout(hideFeedbackModal, 2000); } catch (e) { statusEl.textContent = "Could not send feedback. Please try again."; } }
     function checkForMessageOfTheDay() { const motdRef = DB.collection('siteConfig').doc('messageOfTheDay'); motdRef.get().then(doc => { if (doc.exists && doc.data().isActive) { const data = doc.data(); const seenKey = `seenMessage_${data.id}`; if (!localStorage.getItem(seenKey)) { GID('motdBody').textContent = data.message; GID('messageOfTheDayModal').classList.add('visible'); setScrollLock(true); localStorage.setItem(seenKey, 'true'); } } }); }
     function renderPlatformStatus() { const content = GID('statusContent'); content.innerHTML = '<div class="loader" style="display:block; position:relative; top: 40%;"></div>'; DB.collection('platformStatus').orderBy('timestamp', 'desc').limit(10).get().then(snapshot => { let html = '<h1>Platform Status</h1>'; if (snapshot.empty) { html += '<p>No recent status updates. All systems are operational.</p>'; } else { snapshot.forEach(doc => { const item = doc.data(); const date = item.timestamp.toDate().toLocaleString(); const statusClass = item.status === 'Resolved' ? 'status-open' : item.status === 'Investigating' ? 'status-Awaiting-Reply' : 'status-closed'; html += `<div class="card" style="margin-bottom:1.5rem;"><div class="card-body"><h3>${item.title} <span class="ticket-status ${statusClass}">${item.status}</span></h3><p>${item.details}</p><small style="opacity:0.7;">${date}</small></div></div>`; }); } content.innerHTML = html; }).catch(err => { content.innerHTML = '<h1>Error</h1><p>Could not load platform status.</p>'; }); }
-    function renderContactInfo() { const content = GID('contactContent'); content.innerHTML = '<div class="loader" style="display:block; position:relative; top: 40%;"></div>'; DB.collection('siteConfig').doc('contactInfo').get().then(doc => { if (doc.exists) { const { name, email, phone } = doc.data(); content.innerHTML = `<h1>Contact Us</h1><div class="card"><div class="card-body" style="text-align:center;"><p style="font-size: 1.2rem;">For any inquiries, please reach out to us:</p><h3 style="font-size: 2rem; margin:1rem 0;">${name}</h3><p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p><p><strong>Phone:</strong> ${phone}</p></div></div>`; } else { content.innerHTML = '<h1>Contact information is not available.</h1>'; } }).catch(err => { content.innerHTML = '<h1>Error</h1><p>Could not load contact information.</p>'; }); }
-    async function renderSupportTickets() { const content = GID('supportContent'); content.innerHTML = '<div class="loader" style="display:block; position:relative; top: 40%;"></div>'; if (!currentUser) { content.innerHTML = '<h1>Support</h1><p>You must be logged in to create or view support tickets.</p>'; return; } content.innerHTML = `<h1>My Tickets</h1><button class="cta-button" style="margin-bottom: 2rem;" onclick="checkAndShowNewTicketForm()">Create New Ticket</button><div id="ticketListContainer"></div>`; renderTicketList(); }
-    async function renderTicketList() { const listContainer = GID('ticketListContainer'); listContainer.innerHTML = '<div class="loader" style="display:block; position:relative;"></div>'; try { const snapshot = await DB.collection('tickets').where('userEmail', '==', currentUser.email).orderBy('lastReplyAt', 'desc').get(); if (snapshot.empty) { listContainer.innerHTML = '<p>You have not created any support tickets yet.</p>'; } else { let html = ''; snapshot.forEach(doc => { const ticket = doc.data(); const statusClean = ticket.status.replace(/\s+/g, '-'); html += `<div class="ticket-list-item" onclick="showTicketDetails('${doc.id}')"><div><p style="font-weight:600; margin:0;">${ticket.subject}</p><small>${new Date(ticket.lastReplyAt.toMillis()).toLocaleString()}</small></div><span class="ticket-status status-${statusClean}">${ticket.status}</span></div>`; }); listContainer.innerHTML = html; } } catch (e) { listContainer.innerHTML = '<p>Error loading tickets. Please ensure you have created the required index in Firestore.</p>'; } }
-    async function checkAndShowNewTicketForm() { GID('supportContent').innerHTML = '<div class="loader" style="display:block; position:relative; top: 40%;"></div>'; const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000); try { const recentTickets = await DB.collection('tickets').where('userEmail', '==', currentUser.email).where('createdAt', '>', twentyFourHoursAgo).limit(1).get(); if (!recentTickets.empty) { GID('supportContent').innerHTML = `<h1>Create New Ticket</h1><button class="cta-button demo-button" style="margin-bottom:1rem;" onclick="renderSupportTickets()">&larr; Back to Ticket List</button><div class="card"><div class="card-body" style="text-align:center;"><p>You can only submit one support ticket every 24 hours.</p><p>Please wait before creating a new one, or reply to an existing ticket.</p></div></div>`; } else { showNewTicketForm(); } } catch (e) { GID('supportContent').innerHTML = '<h1>Error</h1><p>Could not check for recent tickets. Please try again.</p>'; } }
-    function showNewTicketForm() { GID('supportContent').innerHTML = `<h1>New Support Ticket</h1><button class="cta-button demo-button" style="margin-bottom:1rem;" onclick="renderSupportTickets()">&larr; Back to Ticket List</button><div class="card"><div class="card-body"><p>Please describe your issue below.</p><div class="form-group"><label for="newTicketSubject">Subject</label><input type="text" id="newTicketSubject" placeholder="e.g., Problem with Test Analysis"></div><div class="form-group"><label for="newTicketMessage">Details</label><textarea id="newTicketMessage" rows="5" placeholder="Please provide as much detail as possible..."></textarea></div><button class="cta-button" onclick="submitNewTicket()">Submit Ticket</button></div></div>`; }
-    async function submitNewTicket() { const subject = GID('newTicketSubject').value.trim(); const message = GID('newTicketMessage').value.trim(); if (!subject || !message) { alert('Subject and message are required.'); return; } const now = firebase.firestore.FieldValue.serverTimestamp(); const ticketData = { userEmail: currentUser.email, userName: currentUser.name, subject, status: 'Open', createdAt: now, lastReplyAt: now }; try { const ticketRef = await DB.collection('tickets').add(ticketData); await DB.collection('tickets').doc(ticketRef.id).collection('messages').add({ text: message, sender: 'user', timestamp: now }); renderSupportTickets(); } catch (e) { alert('Error creating ticket. Please try again.'); } }
-    async function showTicketDetails(ticketId) { const content = GID('supportContent'); content.innerHTML = '<div class="loader" style="display:block; position:relative; top: 40%;"></div>'; try { const ticketSnap = await DB.collection('tickets').doc(ticketId).get(); const messagesSnap = await DB.collection('tickets').doc(ticketId).collection('messages').orderBy('timestamp', 'asc').get(); if (!ticketSnap.exists) { throw new Error('Ticket not found.'); } const ticket = ticketSnap.data(); let messagesHtml = ''; messagesSnap.forEach(doc => { const msg = doc.data(); messagesHtml += `<div class="message-bubble message-${msg.sender}">${msg.text}</div>`; }); content.innerHTML = `<h1>${ticket.subject}</h1><button class="cta-button demo-button" onclick="renderSupportTickets()">&larr; Back to Ticket List</button><div class="card" style="margin-top:2rem;"><div class="card-body" style="max-height: 40vh; overflow-y: auto;">${messagesHtml}</div></div><div class="card"><div class="card-body"><textarea id="replyMessage" rows="4" placeholder="Type your reply..."></textarea><button class="cta-button" style="margin-top:1rem;" onclick="submitTicketReply('${ticketId}')">Send Reply</button></div></div>`; } catch (e) { content.innerHTML = `<p>Error loading ticket details.</p><button onclick="renderSupportTickets()">Back to list</button>`; } }
-    async function submitTicketReply(ticketId) { const message = GID('replyMessage').value.trim(); if (!message) return; const now = firebase.firestore.FieldValue.serverTimestamp(); try { await DB.collection('tickets').doc(ticketId).collection('messages').add({ text: message, sender: 'user', timestamp: now }); await DB.collection('tickets').doc(ticketId).update({ status: 'Awaiting Reply', lastReplyAt: now }); showTicketDetails(ticketId); } catch (e) { alert('Failed to send reply.'); } }
     function checkForPoll() { const pollRef = DB.collection('siteConfig').doc('activePoll'); pollRef.get().then(doc => { if (doc.exists && doc.data().isActive) { const poll = doc.data(); const seenKey = `votedPoll_${poll.id}`; if (!localStorage.getItem(seenKey)) { GID('pollQuestion').textContent = poll.question; const optionsContainer = GID('pollOptions'); optionsContainer.innerHTML = ''; poll.options.forEach(option => { optionsContainer.innerHTML += `<button onclick="submitPollVote('${poll.id}', '${option}')">${option}</button>`; }); GID('pollToast').classList.add('visible'); } } }); }
     async function submitPollVote(pollId, option) { GID('pollToast').classList.remove('visible'); const resultsRef = DB.collection('pollResults').doc(pollId); const increment = firebase.firestore.FieldValue.increment(1); try { await resultsRef.set({ results: { [option]: increment } }, { merge: true }); localStorage.setItem(`votedPoll_${pollId}`, 'true'); } catch (e) { console.error("Error submitting vote:", e); } }
-    
-    function handleNotifications() {
-        const btn = GID('notificationBtn');
-        if (!btn) return;
-        const badge = GID('notificationBadge'), panel = GID('notificationPanel'), list = GID('notificationList');
-        DB.collection('notifications').orderBy('timestamp', 'desc').limit(20).get().then(snapshot => {
-            if (snapshot.empty) {
-                list.innerHTML = '<p style="text-align:center;color:var(--secondary-text-color);padding:1.5rem;">No new notifications.</p>';
-                return;
-            }
-            const lastSeen = localStorage.getItem('lastSeenNotificationTimestamp') || 0;
-            const latestTimestamp = snapshot.docs[0].data().timestamp.toMillis();
-            let unreadCount = 0;
-            let html = '';
-
-            snapshot.forEach(doc => {
-                const n = doc.data();
-                if (n.timestamp.toMillis() > lastSeen) {
-                    unreadCount++;
-                }
-                const date = n.timestamp.toDate().toLocaleDateString();
-                let itemHtml = `<div class="notification-item">${n.message}<small>${date}</small></div>`;
-                html += n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer">${itemHtml}</a>` : `<div style="cursor:default;">${itemHtml}</div>`;
-            });
-
-            list.innerHTML = html;
-
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount;
-                badge.style.display = 'block';
-            } else {
-                badge.style.display = 'none';
-            }
-
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                panel.classList.toggle('visible');
-                badge.style.display = 'none'; // Hide immediately on click
-                localStorage.setItem('lastSeenNotificationTimestamp', latestTimestamp);
-            };
-        }).catch(err => console.error("Error handling notifications:", err));
-    }
-
+    function handleNotifications() { const btn = GID('notificationBtn'); if (!btn) return; const badge = GID('notificationBadge'), panel = GID('notificationPanel'), list = GID('notificationList'); DB.collection('notifications').orderBy('timestamp', 'desc').limit(20).get().then(snapshot => { if (snapshot.empty) { list.innerHTML = '<p style="text-align:center;color:var(--secondary-text-color);padding:1.5rem;">No new notifications.</p>'; return; } const lastSeen = localStorage.getItem('lastSeenNotificationTimestamp') || 0; const latestTimestamp = snapshot.docs[0].data().timestamp.toMillis(); let unreadCount = 0; let html = ''; snapshot.forEach(doc => { const n = doc.data(); if (n.timestamp.toMillis() > lastSeen) { unreadCount++; } const date = n.timestamp.toDate().toLocaleDateString(); let itemHtml = `<div class="notification-item">${n.message}<small>${date}</small></div>`; html += n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer">${itemHtml}</a>` : `<div style="cursor:default;">${itemHtml}</div>`; }); list.innerHTML = html; if (unreadCount > 0) { badge.textContent = unreadCount; badge.style.display = 'block'; } else { badge.style.display = 'none'; } btn.onclick = (e) => { e.stopPropagation(); panel.classList.toggle('visible'); badge.style.display = 'none'; localStorage.setItem('lastSeenNotificationTimestamp', latestTimestamp); }; }).catch(err => console.error("Error handling notifications:", err)); }
     function showMajorAnnouncement() { const modal = GID('majorAnnouncementModal'); const closeBtn = GID('closeMajorAnnouncement'); const imgEl = GID('majorAnnouncementImage'); const titleEl = GID('majorAnnouncementTitle'); const bodyEl = GID('majorAnnouncementBody'); const announcementRef = DB.collection('siteConfig').doc('majorAnnouncement'); announcementRef.get().then(doc => { if (doc.exists) { const data = doc.data(); if (data.isActive && data.id) { const announcementKey = `announcementClosed_${data.id}`; const hasBeenClosed = localStorage.getItem(announcementKey); if (!hasBeenClosed) { titleEl.textContent = data.title || ''; bodyEl.textContent = data.body || ''; if (data.imageUrl) { imgEl.src = data.imageUrl; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } modal.classList.add('visible'); setScrollLock(true); closeBtn.onclick = () => { modal.classList.remove('visible'); setScrollLock(false); localStorage.setItem(announcementKey, 'true'); }; } } } }).catch(err => { console.error("Error fetching major announcement:", err); }); }
     
 // --- PART 4: MAIN EXECUTION ---
@@ -855,23 +637,23 @@
         if (userSession && accessCode) {
             currentUser = JSON.parse(userSession);
             updateUserUI(true, currentUser.name);
-            startSessionListener(accessCode); // MODIFIED
+            startSessionListener(accessCode);
         } else { updateUserUI(false); }
         const savedTheme = localStorage.getItem('selectedTheme') || 'default';
         applyTheme(savedTheme);
         document.querySelectorAll('.anim-hidden').forEach(el => new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('anim-visible'); entry.target.classList.remove('anim-hidden'); } }); }, { threshold: 0.1 }).observe(el));
         showMajorAnnouncement();
         checkForPoll();
-        
+        showTelegramModal();
         const dock = document.querySelector('.dock'); if (dock) { const dockItems = document.querySelectorAll('.dock-item'); const defaultItemSize = 60, maxItemSize = 90, maxDistance = 120; dock.addEventListener('mousemove', (e) => { const dockRect = dock.getBoundingClientRect(); const mouseX = e.clientX - dockRect.left; dockItems.forEach(item => { const itemRect = item.getBoundingClientRect(); const itemCenterX = itemRect.left - dockRect.left + itemRect.width / 2; const distance = Math.abs(mouseX - itemCenterX); if (distance < maxDistance) { const scale = 1 + (maxItemSize / defaultItemSize - 1) * (1 - distance / maxDistance); item.style.transform = `translateY(-${(scale-1)*20}px) scale(${scale})`; item.style.margin = `0 ${scale * 2}px`; } else { item.style.transform = 'translateY(0) scale(1)'; item.style.margin = '0'; } }); }); dock.addEventListener('mouseleave', () => { dockItems.forEach(item => { item.style.transform = 'translateY(0) scale(1)'; item.style.margin = '0'; }); }); }
-        
         let lastScrollY = window.scrollY; const mainHeader = GID('mainHeader'); window.addEventListener('scroll', () => { if (window.scrollY > lastScrollY && window.scrollY > 100) { mainHeader.classList.add('hidden'); } else { mainHeader.classList.remove('hidden'); } lastScrollY = window.scrollY; });
     };
     document.addEventListener('click', (e) => { if(!e.target.closest('#theme-switcher')) {const m = GID('theme-menu'); if(m) m.classList.remove('visible');} if(!e.target.closest('#notificationBtn') && !e.target.closest('#notificationPanel')) {const p = GID('notificationPanel'); if(p) p.classList.remove('visible');} });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAllTools(); GID('choiceModal').classList.remove('visible'); GID('loginModal').classList.remove('visible'); const majorModal = GID('majorAnnouncementModal'); if(majorModal && majorModal.classList.contains('visible')) { majorModal.querySelector('.close-button').click(); } } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAllTools(); GID('choiceModal').classList.remove('visible'); GID('loginModal').classList.remove('visible'); GID('telegramModal').classList.remove('visible'); const majorModal = GID('majorAnnouncementModal'); if(majorModal && majorModal.classList.contains('visible')) { majorModal.querySelector('.close-button').click(); } } });
 </script>    
 </body>
 </html>
+
 
 
 
