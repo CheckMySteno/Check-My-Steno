@@ -1,9 +1,7 @@
-  // --- Your Firebase Config ---
-        const FBCONFIG = {apiKey:"AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE",authDomain:"checkmysteno.firebaseapp.com",projectId:"checkmysteno",storageBucket:"checkmysteno.firebasestorage.app",messagingSenderId:"719325115943",appId:"1:7193-d42a8002"};
+const FBCONFIG = {apiKey:"AIzaSyDPkUWIrsibI-hzKJ8ljhvawdJ9Nq4-cpE",authDomain:"checkmysteno.firebaseapp.com",projectId:"checkmysteno",storageBucket:"checkmysteno.firebasestorage.app",messagingSenderId:"719325115943",appId:"1:7193-d42a8002"};
         firebase.initializeApp(FBCONFIG);
         const DB = firebase.firestore();
 
-        // --- GLOBAL CONFIGURATION ---
         const UPI_ID = "neha394@ybl";
         const PENDING_TICKET_KEY = 'stenoVerificationTicket';
         const PERSISTENT_ACCESS_CODE_KEY = 'stenoUserAccessCode';
@@ -11,6 +9,7 @@
         
         const paymentModal = document.getElementById('paymentModal');
         const termsModal = document.getElementById('termsModal');
+        const upsellModal = document.getElementById('upsellModal');
         let currentStep = 1;
         let originalPrice = 0;
         let finalPrice = 0;
@@ -18,10 +17,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('upi-id-display').innerText = UPI_ID;
-            
-            fetchAndDisplayOffer();
             displayPersistentAccessCode();
-
             const ticketData = localStorage.getItem(PENDING_TICKET_KEY);
             if (ticketData) {
                 const ticket = JSON.parse(ticketData);
@@ -30,43 +26,6 @@
                 showMainContent();
             }
         });
-
-        async function fetchAndDisplayOffer() {
-            const offerBanner = document.getElementById('offer-banner');
-            try {
-                const configRef = DB.collection('siteConfig').doc('config');
-                const configDoc = await configRef.get();
-
-                if (configDoc.exists) {
-                    const featuredCodeName = configDoc.data().featuredOfferCode;
-                    
-                    if (featuredCodeName) {
-                        const offerRef = DB.collection('discountCodes').doc(featuredCodeName);
-                        const offerDoc = await offerRef.get();
-
-                        if (offerDoc.exists) {
-                            const coupon = offerDoc.data();
-                            if (coupon.isActive === true) {
-                                const code = offerDoc.id;
-                                const offerCodeDisplay = document.getElementById('offer-code-display');
-                                const offerDescription = document.getElementById('offer-description');
-                                const offerCodeBox = offerBanner.querySelector('.offer-code-box');
-                                
-                                offerCodeDisplay.textContent = code;
-                                if (coupon.description) {
-                                    offerDescription.textContent = coupon.description;
-                                }
-                                offerCodeBox.onclick = () => copyOfferCode(code, offerCodeBox);
-                                offerBanner.classList.remove('hidden');
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching featured offer:", error);
-                offerBanner.classList.add('hidden');
-            }
-        }
 
         function displayPersistentAccessCode() {
             const accessData = localStorage.getItem(PERSISTENT_ACCESS_CODE_KEY);
@@ -82,9 +41,7 @@
             navigator.clipboard.writeText(codeText).then(() => {
                 const originalIcon = buttonElement.innerHTML;
                 buttonElement.innerHTML = `<i class="fa-solid fa-check"></i>`;
-                setTimeout(() => {
-                    buttonElement.innerHTML = originalIcon;
-                }, 2000);
+                setTimeout(() => { buttonElement.innerHTML = originalIcon; }, 2000);
             }).catch(err => { console.error('Failed to copy text: ', err); });
         }
 
@@ -119,18 +76,6 @@
             }
         }
         
-        function copyOfferCode(code, element) {
-            navigator.clipboard.writeText(code).then(() => {
-                const originalContent = element.innerHTML;
-                element.innerHTML = `<span>COPIED!</span> <i class="fa-solid fa-check"></i>`;
-                element.style.borderColor = 'var(--success-color)';
-                setTimeout(() => {
-                    element.innerHTML = originalContent;
-                    element.style.borderColor = 'var(--border-color)';
-                }, 2500);
-            }).catch(err => console.error('Failed to copy offer code: ', err));
-        }
-
         async function checkVerificationStatus(uniqueCode) {
             const docRef = DB.collection('paymentVerifications').doc(uniqueCode);
             try {
@@ -149,16 +94,12 @@
                     const planName = docData.plan;
                     const planValidityEl = document.getElementById('plan-validity');
 
-                    if (planName.includes('SSC Steno Pass')) {
-                        planValidityEl.innerText = 'Plan valid until your SSC Skill Test';
-                    } else {
-                        const planDuration = getPlanDurationInDays(planName);
-                        if (docData.activationTimestamp && planDuration > 0) {
-                            const activationDate = docData.activationTimestamp.toDate();
-                            const expiryDate = new Date(activationDate);
-                            expiryDate.setDate(activationDate.getDate() + planDuration);
-                            planValidityEl.innerText = `Plan valid until: ${expiryDate.toLocaleDateString()}`;
-                        }
+                    const planDuration = getPlanDurationInDays(planName);
+                    if (docData.activationTimestamp && planDuration > 0) {
+                        const activationDate = docData.activationTimestamp.toDate();
+                        const expiryDate = new Date(activationDate);
+                        expiryDate.setDate(activationDate.getDate() + planDuration);
+                        planValidityEl.innerText = `Plan valid until: ${expiryDate.toLocaleDateString()}`;
                     }
 
                     successSection.classList.remove('hidden');
@@ -167,23 +108,22 @@
                     };
                     localStorage.removeItem(PENDING_TICKET_KEY);
                 } 
-                else if (docData.verified === false) {
-                    if ('rejectionReason' in docData) {
-                        clearInterval(statusCheckInterval);
-                        document.getElementById('pending-section').classList.add('hidden');
-                        const rejectedSection = document.getElementById('rejected-section');
-                        const reason = docData.rejectionReason || "Details provided did not match our records.";
-                        document.getElementById('rejection-reason-text').innerText = reason;
-                        rejectedSection.classList.remove('hidden');
-                        localStorage.removeItem(PENDING_TICKET_KEY);
-                    }
+                else if (docData.verified === false && 'rejectionReason' in docData) {
+                    clearInterval(statusCheckInterval);
+                    document.getElementById('pending-section').classList.add('hidden');
+                    const rejectedSection = document.getElementById('rejected-section');
+                    const reason = docData.rejectionReason || "Details provided did not match our records.";
+                    document.getElementById('rejection-reason-text').innerText = reason;
+                    rejectedSection.classList.remove('hidden');
+                    localStorage.removeItem(PENDING_TICKET_KEY);
                 }
             } catch (error) { console.error("Error checking verification status:", error); }
         }
         
         function getPlanDurationInDays(planName) {
-            if (planName.includes('The Steno Pro Pass')) return 30;
-            if (planName.includes('SSC Steno Pass')) return 3650;
+            if (planName.includes('Bronze')) return 30;
+            if (planName.includes('Silver')) return 90;
+            if (planName.includes('Gold')) return 180;
             return 30;
         }
 
@@ -193,6 +133,56 @@
             let result = "";
             for (let i = 0; i < 4; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); }
             return `${prefix}-${result}`;
+        }
+
+        // --- UPSELL LOGIC ---
+        function selectBronze() {
+            showUpsellModal({
+                upgradeToPlan: 'Silver Pass',
+                upgradePrice: 599,
+                continueWithPlan: 'Bronze Pass',
+                continuePrice: 299,
+                message: 'For just ₹300 more, you can get 3 months of access with the Silver Pass and save 33% in the long run. Would you like to upgrade?'
+            });
+        }
+
+        function selectSilver() {
+            showUpsellModal({
+                upgradeToPlan: 'Gold Pass',
+                upgradePrice: 899,
+                continueWithPlan: 'Silver Pass',
+                continuePrice: 599,
+                message: 'For just ₹300 more, you can double your access to 6 months with the Gold Pass and get our maximum savings. Would you like to upgrade?'
+            });
+        }
+
+        function selectGold() {
+            _showPaymentModal('Gold Pass', 899);
+        }
+
+        function showUpsellModal(data) {
+            document.getElementById('upsell-title').innerText = `Upgrade to ${data.upgradeToPlan} & Save!`;
+            document.getElementById('upsell-message').innerText = data.message;
+            const confirmBtn = document.getElementById('upsell-confirm-btn');
+            const declineBtn = document.getElementById('upsell-decline-btn');
+
+            confirmBtn.innerText = `Yes, Upgrade to ${data.upgradeToPlan.split(' ')[0]}!`;
+            confirmBtn.onclick = () => {
+                hideUpsellModal();
+                _showPaymentModal(data.upgradeToPlan, data.upgradePrice);
+            };
+
+            declineBtn.innerText = `No, Continue with ${data.continueWithPlan.split(' ')[0]}`;
+            declineBtn.onclick = () => {
+                hideUpsellModal();
+                _showPaymentModal(data.continueWithPlan, data.continuePrice);
+            };
+
+            upsellModal.classList.add('visible');
+        }
+
+        function hideUpsellModal() {
+            upsellModal.classList.remove('visible');
         }
         
         function navigateToStep(stepNumber) {
@@ -234,7 +224,7 @@
             });
         });
 
-        function showPaymentModal(planName, planPrice) {
+        function _showPaymentModal(planName, planPrice) {
             originalPrice = planPrice;
             finalPrice = planPrice;
             document.getElementById('summary-plan-name').innerText = planName;
@@ -278,7 +268,7 @@
             qrContainer.innerHTML = "";
             const uniqueCode = document.getElementById('uniqueCodeInput').value;
             const upiString = `upi://pay?pa=${UPI_ID}&pn=Check%20My%20Steno&am=${finalPrice}&cu=INR&tn=${uniqueCode}`;
-            qrCodeInstance = new QRCode(qrContainer, { text: upiString, width: 130, height: 130, colorDark: "#0B1120", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+            qrCodeInstance = new QRCode(qrContainer, { text: upiString, width: 130, height: 130, colorDark: "#1a202c", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
         }
 
         async function applyCoupon() {
@@ -342,7 +332,7 @@
                 price: document.getElementById('planPriceInput').value,
                 uniqueCode: document.getElementById('uniqueCodeInput').value,
                 appliedReferralCode: document.getElementById('referralCode').value.trim(),
-                verified: false,
+                verified: false, // Core logic restored to original state
                 submissionTimestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
