@@ -102,7 +102,29 @@ function getSubstitutionCost(o, t, o_orig, t_orig) {
     if (origHasHyphen !== typedHasHyphen) return Infinity;
 
     if (o_norm === t_norm) return 0;
-    if (levenshtein(o_norm, t_norm) <= 3) return 0.5;
+
+    // ================== START: MODIFIED LOGIC ==================
+    // This section implements the "Smart Threshold" rule.
+    // It makes the allowed Levenshtein distance proportional to the word length.
+
+    const distance = levenshtein(o_norm, t_norm);
+    const shorterWordLength = Math.min(o_norm.length, t_norm.length);
+
+    // Set a dynamic threshold based on word length
+    let threshold = 1; // Default for very short words (1-4 letters)
+    if (shorterWordLength > 4) {
+        threshold = 2; // For medium words (5-7 letters)
+    }
+    if (shorterWordLength > 7) {
+        threshold = 3; // For longer words (8+ letters)
+    }
+
+    if (distance <= threshold) {
+        return 0.5; // It's a likely spelling mistake
+    }
+
+    // =================== END: MODIFIED LOGIC ===================
+
     return 100;
 }
 
