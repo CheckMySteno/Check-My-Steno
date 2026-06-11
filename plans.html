@@ -426,7 +426,7 @@
                             <div class="space-y-3 w-full text-center sm:text-left">
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Official UPI ID</span>
-                                    <strong class="text-sm text-slate-800 block select-all">checkmysteno@upi</strong>
+                                    <strong class="text-sm text-slate-800 block select-all">neha394@ybl</strong>
                                 </div>
                                 <div class="border-t border-slate-100 pt-3">
                                     <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Required Remarks Note (Order ID)</span>
@@ -570,7 +570,7 @@
     function generatePaymentQR(price, orderId) {
         document.getElementById('qr-code-container').innerHTML = '';
         new QRCode(document.getElementById("qr-code-container"), {
-            text: `upi://pay?pa=checkmysteno@upi&pn=CheckMySteno&am=${price}&tn=${orderId}`,
+            text: `upi://pay?pa=neha394@ybl&pn=CheckMySteno&am=${price}&tn=${orderId}`,
             width: 140, height: 140
         });
     }
