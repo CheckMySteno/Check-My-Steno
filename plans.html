@@ -122,7 +122,7 @@
                     <button class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl transition" onclick="startOver()">
                         Try Again
                     </button>
-                    <a href="https://t.me/" target="_blank" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl transition inline-flex items-center justify-center">
+                    <a href="https://t.me/gauravrajput" target="_blank" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl transition inline-flex items-center justify-center">
                         <i class="fa-brands fa-telegram mr-2 text-sky-500 text-lg"></i> Contact Support
                     </a>
                 </div>
@@ -417,18 +417,24 @@
                 <div id="step-2-payment" class="step-content hidden space-y-4">
                     <h4 class="font-bold text-slate-900 text-base">Payment Instructions</h4>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Scan the QR code using any UPI Application (PhonePe, GPay, Paytm) or copy our UPI ID. <strong class="text-rose-500 font-bold">Important:</strong> Please paste your Unique Order ID in the payment remarks/notes.
+                        Scan the QR code using any UPI Application (PhonePe, GPay, Paytm). <strong class="text-rose-500 font-bold">Important:</strong> Please paste your Unique Order ID in the payment remarks/notes.
                     </p>
                     
                     <div class="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm space-y-4">
                         <div id="qr-code-area" class="flex flex-col sm:flex-row items-center gap-6 justify-center">
                             <div id="qr-code-container" class="p-2 border border-slate-100 rounded-xl bg-white shrink-0 shadow-sm"></div>
-                            <div class="space-y-3 w-full text-center sm:text-left">
+                            <div class="space-y-3 w-full text-center sm:text-left flex flex-col justify-center">
                                 <div>
-                                    <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Official UPI ID</span>
-                                    <strong class="text-sm text-slate-800 block select-all">neha394@ybl</strong>
+                                    <button onclick="toggleUpiDisplay()" id="upi-toggle-btn" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition underline inline-flex items-center gap-1.5 py-1">
+                                        <i class="fa-solid fa-eye"></i> Show UPI ID
+                                    </button>
+                                    
+                                    <div id="upi-display-area" class="hidden mt-2 bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-left">
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Official UPI ID</span>
+                                        <strong class="text-sm text-slate-800 block select-all">neha394@ybl</strong>
+                                    </div>
                                 </div>
-                                <div class="border-t border-slate-100 pt-3">
+                                <div class="border-t border-slate-100 pt-3 mt-1">
                                     <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Required Remarks Note (Order ID)</span>
                                     <div class="flex items-center justify-center sm:justify-start gap-2 mt-1">
                                         <span class="font-mono bg-blue-50 text-blue-700 font-bold px-2.5 py-1 text-sm border border-blue-100 rounded-lg select-all" id="unique-code-display"></span>
@@ -543,6 +549,14 @@
         finalPrice = price;
         appliedCoupon = null;
         
+        // Reset UPI toggle state
+        const upiArea = document.getElementById('upi-display-area');
+        const toggleBtn = document.getElementById('upi-toggle-btn');
+        if (upiArea && toggleBtn) {
+            upiArea.classList.add('hidden');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-eye"></i> Show UPI ID';
+        }
+
         // Clear Coupon UI State
         document.getElementById('coupon-code-input').value = '';
         document.getElementById('coupon-message').textContent = '';
@@ -573,6 +587,18 @@
             text: `upi://pay?pa=neha394@ybl&pn=CheckMySteno&am=${price}&tn=${orderId}`,
             width: 140, height: 140
         });
+    }
+
+    function toggleUpiDisplay() {
+        const upiArea = document.getElementById('upi-display-area');
+        const toggleBtn = document.getElementById('upi-toggle-btn');
+        if (upiArea.classList.contains('hidden')) {
+            upiArea.classList.remove('hidden');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Hide UPI ID';
+        } else {
+            upiArea.classList.add('hidden');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-eye"></i> Show UPI ID';
+        }
     }
 
     // --- TARGETED PLAN COUPON ENGINE ---
@@ -680,6 +706,7 @@
         }
     }
 
+    // Clear animations cleanly on close
     function hidePaymentModal() {
         const modal = document.getElementById('paymentModal');
         modal.classList.remove('opacity-100');
